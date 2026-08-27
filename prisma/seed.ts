@@ -1,4 +1,4 @@
-﻿import { PrismaClient, Role, RoomStatus } from "@prisma/client";
+import { PrismaClient, Role, RoomStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -57,14 +57,26 @@ async function main() {
   }
   console.log("Seeded Rooms:", roomsData.length);
 
-  // 3. Seed Staff Users
-  const passwordHash = await bcrypt.hash("clinic123", 10);
+  // 3. Seed Staff Users with bcrypt hashes (password: Password123!)
+  const passwordHash = await bcrypt.hash("Password123!", 10);
 
   const usersData = [
+    {
+      email: "receptionist@mabvuku.co.zw",
+      name: "R. Moyo (Reception)",
+      role: Role.RECEPTIONIST,
+      zoneId: zoneA.id,
+    },
     {
       email: "receptionist@mabvuku.clinic",
       name: "Mabvuku Reception",
       role: Role.RECEPTIONIST,
+      zoneId: zoneA.id,
+    },
+    {
+      email: "doctor@mabvuku.co.zw",
+      name: "Dr. T. Moyo",
+      role: Role.DOCTOR,
       zoneId: zoneA.id,
     },
     {
@@ -74,8 +86,14 @@ async function main() {
       zoneId: zoneA.id,
     },
     {
-      email: "admin@mabvuku.clinic",
+      email: "admin@mabvuku.co.zw",
       name: "Clinic Administrator",
+      role: Role.ADMIN,
+      zoneId: null,
+    },
+    {
+      email: "admin@mabvuku.clinic",
+      name: "Clinic Admin",
       role: Role.ADMIN,
       zoneId: null,
     },
@@ -84,7 +102,7 @@ async function main() {
   for (const user of usersData) {
     await prisma.user.upsert({
       where: { email: user.email },
-      update: {},
+      update: { passwordHash },
       create: {
         email: user.email,
         name: user.name,

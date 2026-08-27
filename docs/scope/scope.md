@@ -15,7 +15,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Coding standards and tooling | Foundation | in-progress |
 | 3 | Core data model | Foundation | done |
 | 4 | Design system and UI foundation | Foundation | in-progress |
-| 5 | Auth and roles | Foundation | planned |
+| 5 | Auth and roles | Foundation | in-progress |
 | 6 | Patient check-in and queue core | Slice 1 | planned |
 | 7 | Queue view (staff workstation) | Slice 1 | planned |
 | 8 | Room assignment and status | Slice 1 | planned |
@@ -78,13 +78,23 @@ Tailwind is installed but no design system is defined. The UI reference screensh
 - [x] Verify it: `/check verify design system and UI foundation`
 - [ ] Test it: `/test design system and UI foundation`
 
-### 5. Auth and roles · needs a decision
+### 5. Auth and roles · in-progress
+spec [0004](../specs/0004-auth-and-roles/index.md) · code in `src/lib/auth.ts`, `src/middleware.ts`, `app/(auth)/login/page.tsx`
 
 NextAuth v5 is installed but has no config. Three roles: Receptionist, Doctor/Nurse, Admin. Role gates control which pages and actions each user can reach (no receptionist on the Admin pages, no doctor on check-in management actions).
 
 **Done when:** sign-in page works, sessions persist, role is readable in middleware and server components, and an unauthenticated request redirects to sign-in.
 
-- [ ] Design it (spec): `/architect auth and roles`
+- [x] Design it (spec): `/architect auth and roles`
+- [x] Build it: `/develop auth and roles`
+  - [x] Install bcryptjs and configure NextAuth v5 credentials auth in `src/lib/auth.ts` (satisfies AC-1, AC-2)
+  - [x] Create Next.js Middleware in `middleware.ts` for RBAC route protection (satisfies AC-4, AC-5)
+  - [x] Create NextAuth route handler at `app/api/auth/[...nextauth]/route.ts` (satisfies AC-1)
+  - [x] Build branded clinic sign in page at `app/(auth)/login/page.tsx` (satisfies AC-3)
+  - [x] Connect SessionProvider and update HeaderBar with live user session and logout action (satisfies AC-6)
+  - [x] Update `prisma/seed.ts` with hashed test staff accounts (satisfies AC-1)
+- [x] Verify it: `/check verify auth and roles`
+- [ ] Test it: `/test auth and roles`
 
 ## Slice 1: Thin operational thread
 
