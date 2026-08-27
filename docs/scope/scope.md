@@ -13,8 +13,8 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 |---|---------|-------|--------|
 | 1 | Stack and architecture | Foundation | in-progress |
 | 2 | Coding standards and tooling | Foundation | in-progress |
-| 3 | Core data model | Foundation | planned |
-| 4 | Design system and UI foundation | Foundation | planned |
+| 3 | Core data model | Foundation | done |
+| 4 | Design system and UI foundation | Foundation | in-progress |
 | 5 | Auth and roles | Foundation | planned |
 | 6 | Patient check-in and queue core | Slice 1 | planned |
 | 7 | Queue view (staff workstation) | Slice 1 | planned |
@@ -45,7 +45,7 @@ ESLint is configured and Tailwind is installed. No audit has run yet to capture 
 - [ ] Capture conventions: `/audit`
 - [ ] Install and verify tooling: `/develop coding standards and tooling`
 
-### 3. Core data model · in-progress
+### 3. Core data model · done
 spec [0002](../specs/0002-core-data-model/index.md) · code in `src/lib/db.ts`, `prisma/schema.prisma`
 
 Patient, Visit, Room, Zone, and User entities as specified in `AGENTS.md`. Prisma schema currently has no models; the database is empty.
@@ -59,15 +59,24 @@ Patient, Visit, Room, Zone, and User entities as specified in `AGENTS.md`. Prism
   - [ ] Execute `prisma migrate dev` against Supabase Postgres (satisfies AC-2)
   - [x] Create `prisma/seed.ts` with initial zones, rooms, and test staff accounts (satisfies AC-4)
 - [x] Verify it: `/check verify core data model`
-- [ ] Test it: `/test core data model`
+- [x] Test it: `/test core data model`
 
-### 4. Design system and UI foundation · needs a decision
+### 4. Design system and UI foundation · in-progress
+spec [0003](../specs/0003-design-system-ui-foundation/index.md)
 
 Tailwind is installed but no design system is defined. The UI reference screenshot (in `design/`) shows the queue workstation layout: left sidebar navigation, header bar, table style, and button conventions. All pages must draw from the same design tokens and components.
 
 **Done when:** color palette, typography, spacing rhythm, sidebar, header, table, and button component patterns are captured in a spec (`design.md`), and a base layout component renders the sidebar and header without errors.
 
-- [ ] Design it (spec): `/architect design system and UI foundation`
+- [x] Design it (spec): `/architect design system and UI foundation`
+- [ ] Build it: `/develop design system and UI foundation`
+  - [ ] Configure Tailwind CSS 4 design tokens, Inter font, and install `lucide-react` (satisfies AC-1)
+  - [ ] Build typed atomic UI primitives in `src/components/ui/` (Button, Input, Select, Badge, AlertBanner, MetricCard) (satisfies AC-2, AC-6)
+  - [ ] Build Workstation Shell layout components (Sidebar, HeaderBar, WorkstationLayout) (satisfies AC-3, AC-6)
+  - [ ] Build Patient Display Board layout shell in `src/components/layout/DisplayLayout.tsx` (satisfies AC-4, AC-6)
+  - [ ] Setup Next.js Route Groups `(workstation)` and `(display)` with a component showcase page (satisfies AC-5, AC-2)
+- [ ] Verify it: `/check verify design system and UI foundation`
+- [ ] Test it: `/test design system and UI foundation`
 
 ### 5. Auth and roles · needs a decision
 

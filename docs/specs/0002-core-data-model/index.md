@@ -1,7 +1,7 @@
-﻿# 0002. Core data model
+# 0002. Core data model
 
 **Date**: 2026-08-26
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "npx vitest run",
     "postinstall": "prisma skills sync || exit 0"
   },
   "prisma": {
@@ -25,6 +26,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -34,6 +37,7 @@
     "serwist": "^9.5.12",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }
