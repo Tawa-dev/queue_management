@@ -8,30 +8,22 @@ import {
   UserCheck,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Search,
-  UserPlus,
   Tv,
-  Check,
   RefreshCw,
   Clock,
 } from "lucide-react";
 import {
   Button,
   Input,
-  Select,
   Badge,
   AlertBanner,
   MetricBar,
-  MetricCard,
 } from "@/components/ui";
+import { CheckInStrip } from "@/components/queue/CheckInStrip";
 
-export default function DesignSystemShowcasePage() {
-  const [patientName, setPatientName] = useState("");
-  const [reason, setReason] = useState("");
-  const [isUrgent, setIsUrgent] = useState(false);
+export default function WorkstationHomePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("room-1");
   const [showAlert, setShowAlert] = useState(true);
 
   const summaryMetrics = [
@@ -80,14 +72,14 @@ export default function DesignSystemShowcasePage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-bold text-[#0B2D6B]">
-              UI Foundation & Design System
+              Outpatient Queue Workstation
             </h1>
             <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-[#ECFDF5] text-[#16A34A] border border-[#86EFAC]/40">
-              Active v1.0
+              Live Workstation
             </span>
           </div>
           <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-            Standardized UI primitives, tokens, and workstation shell for Mabvuku Polyclinic.
+            Mabvuku Polyclinic Outpatient Triage & Consultation Workstation
           </p>
         </div>
 
@@ -110,68 +102,23 @@ export default function DesignSystemShowcasePage() {
         <MetricBar metrics={summaryMetrics} />
       </section>
 
-      {/* 3. Inline Alert Banners */}
+      {/* 3. System Announcement Alert */}
       {showAlert && (
-        <section aria-label="System Announcements" className="space-y-2.5">
+        <section aria-label="System Announcements">
           <AlertBanner
-            type="success"
-            message="Design system tokens, typography, and atomic primitives loaded successfully."
+            type="info"
+            message="Check-in pipeline active: Submitting the intake strip persists real patient and visit records."
             onDismiss={() => setShowAlert(false)}
           />
         </section>
       )}
 
-      {/* 4. Interactive Workstation Grid Demo */}
+      {/* 4. Main Workstation Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Check-in Strip & Waiting Queue Mock */}
+        {/* Left 2 Cols: Check-in Strip & Waiting Queue */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Check In Strip */}
-          <div className="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#0B2D6B] flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-[#1E4DB7]" />
-                Check In New Patient
-              </h3>
-              <span className="text-xs text-[#64748B]">Walk-in Outpatient</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Patient Name"
-                isRequired
-                placeholder="Enter full name"
-                value={patientName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatientName(e.target.value)}
-              />
-              <Input
-                label="Reason for Visit"
-                isRequired
-                placeholder="Briefly describe reason for visit"
-                value={reason}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReason(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-              <label className="flex items-center gap-2 text-xs font-semibold text-[#334155] cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isUrgent}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsUrgent(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#CBD5E1] text-[#0B2D6B] focus:ring-[#1E4DB7]"
-                />
-                <span>Urgent / Priority Case</span>
-              </label>
-
-              <Button
-                variant="primary"
-                icon={<UserPlus className="w-4 h-4" />}
-                onClick={() => alert(`Checked in: ${patientName || "Anonymous"}`)}
-              >
-                Check In Patient
-              </Button>
-            </div>
-          </div>
+          {/* Real Patient Check-In Strip Component */}
+          <CheckInStrip />
 
           {/* Waiting Queue Table Preview */}
           <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-sm overflow-hidden">
@@ -338,63 +285,6 @@ export default function DesignSystemShowcasePage() {
           </div>
         </div>
       </div>
-
-      {/* 5. Comprehensive Design System Primitives Gallery */}
-      <section className="bg-white p-6 rounded-lg border border-[#E2E8F0] shadow-sm space-y-6">
-        <div className="border-b border-[#F1F5F9] pb-3">
-          <h2 className="text-lg font-bold text-[#0B2D6B]">
-            Design Token & UI Primitive Catalog
-          </h2>
-          <p className="text-xs text-[#64748B]">
-            Reusable component inventory for subsequent feature slices.
-          </p>
-        </div>
-
-        {/* Buttons Gallery */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-            Button Variants & States
-          </h3>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="primary">Primary Action</Button>
-            <Button variant="secondary">Secondary (Outline)</Button>
-            <Button variant="tertiary">Tertiary (Text)</Button>
-            <Button variant="destructive">Destructive / DNA</Button>
-            <Button variant="outline_destructive">Outline Destructive</Button>
-            <Button variant="primary" disabled>Disabled State</Button>
-            <Button variant="primary" isLoading>Loading State</Button>
-          </div>
-        </div>
-
-        {/* Badges Gallery */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-            Semantic Status Badges
-          </h3>
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge variant="waiting" />
-            <Badge variant="in_consultation" />
-            <Badge variant="seen" />
-            <Badge variant="did_not_attend" />
-            <Badge variant="available" />
-            <Badge variant="busy" />
-            <Badge variant="urgent" />
-          </div>
-        </div>
-
-        {/* Alerts Gallery */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-            Alert Banners
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <AlertBanner type="success" message="Patient checked in successfully." />
-            <AlertBanner type="warning" message="Please select an available room." />
-            <AlertBanner type="error" message="Failed to assign room. Try again." />
-            <AlertBanner type="info" message="Live synchronization active every 5s." />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

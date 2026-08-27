@@ -16,7 +16,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 3 | Core data model | Foundation | done |
 | 4 | Design system and UI foundation | Foundation | in-progress |
 | 5 | Auth and roles | Foundation | in-progress |
-| 6 | Patient check-in and queue core | Slice 1 | planned |
+| 6 | Patient check-in and queue core | Slice 1 | in-progress |
 | 7 | Queue view (staff workstation) | Slice 1 | planned |
 | 8 | Room assignment and status | Slice 1 | planned |
 | 9 | On-screen display board | Slice 2 | planned |
@@ -100,13 +100,21 @@ NextAuth v5 is installed but has no config. Three roles: Receptionist, Doctor/Nu
 
 The tracer bullet: one real path that touches every layer. A receptionist signs in, checks in a patient, that patient appears in the staff queue view, and a staff member assigns them to a room. Everything is real: real auth, real DB write, real UI. No display board yet, no voice announcements, no reporting.
 
-### 6. Patient check-in and queue core · needs a decision
+### 6. Patient check-in and queue core · in-progress
+spec [0005](../specs/0005-patient-check-in-and-queue-core/index.md) · code in `src/server/actions/checkIn.ts`, `src/components/queue/CheckInStrip.tsx`
 
-The always-visible check-in strip at the top of the Queue page. Receptionist enters patient name, reason for visit, and optional urgent flag. Patient is saved to the database and appears immediately in the waiting list. Walk-in is the default (no separate type label needed).
+Check-in form strip at the top of the Queue page. Staff enters patient name, reason for visit, and optional urgent flag. Submitting creates a Patient (if new) and a Visit row (status: `WAITING`) with a sequential ticket number.
 
-**Done when:** a receptionist (signed in) submits the check-in form, the visit record is created with status `waiting`, and the patient row appears in the queue table within the same page load or next poll cycle without a manual refresh.
+**Done when:** submitting the check-in strip creates a Visit row in DB with status `WAITING` and auto-generated ticket number, and clears the form.
 
-- [ ] Design it (spec): `/architect patient check-in and queue core`
+- [x] Design it (spec): `/architect patient check-in and queue core`
+- [x] Build it: `/develop patient check-in and queue core`
+  - [x] Create Server Action `checkInPatientAction` in `src/server/actions/checkIn.ts` (satisfies AC-2, AC-3, AC-4)
+  - [x] Build `CheckInStrip` component in `src/components/queue/CheckInStrip.tsx` (satisfies AC-1, AC-5)
+  - [x] Wire client form state, validation, duplicate check warnings, and reset logic (satisfies AC-4, AC-5, AC-6)
+  - [x] Mount `CheckInStrip` at the top of `app/(workstation)/page.tsx` (satisfies AC-1, AC-6)
+- [x] Verify it: `/check verify patient check-in and queue core`
+- [x] Test it: `/test patient check-in and queue core`
 
 ### 7. Queue view (staff workstation) · needs a decision
 
