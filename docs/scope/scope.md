@@ -62,20 +62,20 @@ Patient, Visit, Room, Zone, and User entities as specified in `AGENTS.md`. Prism
 - [x] Test it: `/test core data model`
 
 ### 4. Design system and UI foundation · in-progress
-spec [0003](../specs/0003-design-system-ui-foundation/index.md)
+spec [0003](../specs/0003-design-system-ui-foundation/index.md) · code in `src/components/ui`, `src/components/layout`, `app/globals.css`
 
 Tailwind is installed but no design system is defined. The UI reference screenshot (in `design/`) shows the queue workstation layout: left sidebar navigation, header bar, table style, and button conventions. All pages must draw from the same design tokens and components.
 
 **Done when:** color palette, typography, spacing rhythm, sidebar, header, table, and button component patterns are captured in a spec (`design.md`), and a base layout component renders the sidebar and header without errors.
 
 - [x] Design it (spec): `/architect design system and UI foundation`
-- [ ] Build it: `/develop design system and UI foundation`
-  - [ ] Configure Tailwind CSS 4 design tokens, Inter font, and install `lucide-react` (satisfies AC-1)
-  - [ ] Build typed atomic UI primitives in `src/components/ui/` (Button, Input, Select, Badge, AlertBanner, MetricCard) (satisfies AC-2, AC-6)
-  - [ ] Build Workstation Shell layout components (Sidebar, HeaderBar, WorkstationLayout) (satisfies AC-3, AC-6)
-  - [ ] Build Patient Display Board layout shell in `src/components/layout/DisplayLayout.tsx` (satisfies AC-4, AC-6)
-  - [ ] Setup Next.js Route Groups `(workstation)` and `(display)` with a component showcase page (satisfies AC-5, AC-2)
-- [ ] Verify it: `/check verify design system and UI foundation`
+- [x] Build it: `/develop design system and UI foundation`
+  - [x] Configure Tailwind CSS 4 design tokens, Inter font, and install `lucide-react` (satisfies AC-1)
+  - [x] Build typed atomic UI primitives in `src/components/ui/` (Button, Input, Select, Badge, AlertBanner, MetricCard) (satisfies AC-2, AC-6)
+  - [x] Build Workstation Shell layout components (Sidebar, HeaderBar, WorkstationLayout) (satisfies AC-3, AC-6)
+  - [x] Build Patient Display Board layout shell in `src/components/layout/DisplayLayout.tsx` (satisfies AC-4, AC-6)
+  - [x] Setup Next.js Route Groups `(workstation)` and `(display)` with a component showcase page (satisfies AC-5, AC-2)
+- [x] Verify it: `/check verify design system and UI foundation`
 - [ ] Test it: `/test design system and UI foundation`
 
 ### 5. Auth and roles · needs a decision

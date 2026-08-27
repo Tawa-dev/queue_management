@@ -1,7 +1,7 @@
 # 0003. Design system and UI foundation
 
 **Date**: 2026-08-27
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -135,12 +135,12 @@ export function Badge({ variant, children, icon, className = "" }: BadgeProps) {
 
 ## Build plan
 
-1. Install `lucide-react` and configure Tailwind CSS 4 design tokens, Inter font import, and custom utilities in `app/globals.css`, satisfies **AC-1**
-2. Build atomic UI primitives in `src/components/ui/` (`Button.tsx`, `Input.tsx`, `Select.tsx`, `Badge.tsx`, `AlertBanner.tsx`, `MetricCard.tsx`) with comprehensive story props and exports, satisfies **AC-2**, **AC-6**
-3. Create the Workstation Shell components in `src/components/layout/` (`HeaderBar.tsx`, `Sidebar.tsx`, `WorkstationLayout.tsx`) with Harare municipal crest, live time display, connection status chip, and navigation links, satisfies **AC-3**, **AC-6**
-4. Create the Patient Display Board shell component in `src/components/layout/DisplayLayout.tsx` with high contrast TV headers, zone sub banner, and live announcement styling, satisfies **AC-4**, **AC-6**
-5. Setup Next.js Route Groups `app/(workstation)/layout.tsx` and `app/(display)/layout.tsx` to mount the respective layout shells cleanly, satisfies **AC-5**
-6. Implement a design system showcase page or update `app/(workstation)/page.tsx` demonstrating all components, variants, and responsive states, satisfies **AC-2**, **AC-3**
+1. [x] Install `lucide-react` and configure Tailwind CSS 4 design tokens, Inter font import, and custom utilities in `app/globals.css`, satisfies **AC-1**
+2. [x] Build atomic UI primitives in `src/components/ui/` (`Button.tsx`, `Input.tsx`, `Select.tsx`, `Badge.tsx`, `AlertBanner.tsx`, `MetricCard.tsx`) with comprehensive story props and exports, satisfies **AC-2**, **AC-6**
+3. [x] Create the Workstation Shell components in `src/components/layout/` (`HeaderBar.tsx`, `Sidebar.tsx`, `WorkstationLayout.tsx`) with Harare municipal crest, live time display, connection status chip, and navigation links, satisfies **AC-3**, **AC-6**
+4. [x] Create the Patient Display Board shell component in `src/components/layout/DisplayLayout.tsx` with high contrast TV headers, zone sub banner, and live announcement styling, satisfies **AC-4**, **AC-6**
+5. [x] Setup Next.js Route Groups `app/(workstation)/layout.tsx` and `app/(display)/layout.tsx` to mount the respective layout shells cleanly, satisfies **AC-5**
+6. [x] Implement a design system showcase page or update `app/(workstation)/page.tsx` demonstrating all components, variants, and responsive states, satisfies **AC-2**, **AC-3**
 
 ## Consequences
 

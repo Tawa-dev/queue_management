@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none">
+  <!-- Shield Background -->
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="50%" stop-color="#DC2626" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+  </defs>
+
+  <!-- Laurel Wreath Crest Surrounding -->
+  <path d="M 20 65 C 10 45 15 25 35 15 C 38 18 35 25 30 28 C 20 35 18 50 25 60 Z" fill="url(#goldGrad)" />
+  <path d="M 80 65 C 90 45 85 25 65 15 C 62 18 65 25 70 28 C 80 35 82 50 75 60 Z" fill="url(#goldGrad)" />
+
+  <!-- Shield Base -->
+  <path d="M 28 22 L 72 22 C 72 45 68 70 50 82 C 32 70 28 45 28 22 Z" fill="#0B2D6B" stroke="#F59E0B" stroke-width="2.5" />
+
+  <!-- Heraldic Cross / Quartering -->
+  <path d="M 29 45 L 71 45" stroke="#F59E0B" stroke-width="2" />
+  <path d="M 50 23 L 50 80" stroke="#F59E0B" stroke-width="2" />
+
+  <!-- Zimbabwe Bird / Heraldic Emblem on Top Quarter -->
+  <path d="M 43 36 C 43 30 50 28 50 28 C 50 28 57 30 57 36 C 55 40 45 40 43 36 Z" fill="#FCD34D" />
+  
+  <!-- Flowing Sun / Water Ribbons in lower quarters -->
+  <path d="M 33 55 Q 40 50 46 58 Q 40 65 33 55 Z" fill="#38BDF8" />
+  <path d="M 67 55 Q 60 50 54 58 Q 60 65 67 55 Z" fill="#EF4444" />
+
+  <!-- Top Crown / Crest -->
+  <path d="M 35 18 L 42 10 L 50 16 L 58 10 L 65 18 Z" fill="#F59E0B" stroke="#78350F" stroke-width="1" />
+  <circle cx="50" cy="8" r="3" fill="#EF4444" stroke="#F59E0B" stroke-width="1" />
+  <circle cx="38" cy="11" r="2" fill="#3B82F6" />
+  <circle cx="62" cy="11" r="2" fill="#3B82F6" />
+
+  <!-- City of Harare Banner Ribbon -->
+  <path d="M 20 84 Q 50 92 80 84 L 84 92 Q 50 99 16 92 Z" fill="#FCD34D" stroke="#92400E" stroke-width="1" />
+  <text x="50" y="91" font-size="5" font-weight="bold" fill="#0F172A" text-anchor="middle" font-family="sans-serif">CITY OF HARARE</text>
+</svg>

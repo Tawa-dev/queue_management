@@ -1,26 +1,77 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary-navy: #0B2D6B;
+  --color-primary-blue: #1E4DB7;
+  --color-primary-tint: #EFF6FF;
+  --color-primary-tint-alt: #E9F0FF;
+
+  --color-neutral-slate-900: #0F172A;
+  --color-neutral-slate-700: #334155;
+  --color-neutral-slate-500: #64748B;
+  --color-neutral-slate-400: #94A3B8;
+  --color-neutral-slate-300: #CBD5E1;
+  --color-neutral-slate-200: #E2E8F0;
+  --color-neutral-slate-100: #F1F5F9;
+  --color-neutral-slate-50: #F8FAFC;
+  --color-neutral-white: #FFFFFF;
+
+  --color-status-waiting-bg: #FFF4E5;
+  --color-status-waiting-text: #F97316;
+  --color-status-consult-bg: #EFF6FF;
+  --color-status-consult-text: #1D4ED8;
+  --color-status-seen-bg: #ECFDF5;
+  --color-status-seen-text: #16A34A;
+  --color-status-dna-bg: #F1F5F9;
+  --color-status-dna-text: #475569;
+  --color-status-available-bg: #ECFDF5;
+  --color-status-available-text: #16A34A;
+  --color-status-busy-bg: #FFF7ED;
+  --color-status-busy-text: #EA580C;
+  --color-status-urgent-bg: #FEF2F2;
+  --color-status-urgent-text: #DC2626;
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+  --shadow-clinic-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-clinic-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  --shadow-clinic-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.10);
+  --shadow-clinic-xl: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
+
+  --radius-clinic-xs: 4px;
+  --radius-clinic-sm: 8px;
+  --radius-clinic-md: 12px;
+  --radius-clinic-lg: 16px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #F8FAFC;
+  --foreground: #0F172A;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbars for high-density clinic tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
