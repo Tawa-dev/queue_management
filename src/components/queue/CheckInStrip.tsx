@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { UserPlus, AlertTriangle, User, Activity, ShieldAlert } from "lucide-react";
+import { UserPlus, ShieldAlert } from "lucide-react";
 import { Button, Input, AlertBanner } from "@/components/ui";
 import { checkInPatientAction, CheckInResult } from "@/server/actions/checkIn";
 
@@ -52,9 +52,8 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
       if (res.success) {
         setAlertState({
           type: "success",
-          message: `Successfully checked in ${res.patientName} — Ticket #${res.ticketNumber} issued.`,
+          message: `Patient checked in successfully. Ticket #${res.ticketNumber} issued.`,
         });
-        // Clear form state
         setFullName("");
         setReason("");
         setIsUrgent(false);
@@ -72,7 +71,7 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
       } else {
         setAlertState({
           type: "error",
-          message: res.error || "Failed to check in patient. Please try again.",
+          message: res.error || "Failed to check in patient. Try again.",
         });
       }
     } catch {
@@ -91,31 +90,12 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
   };
 
   return (
-    <div className={`w-full bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm space-y-3 ${className}`}>
-      {/* Top Title & Header Strip */}
-      <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-2.5">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#EFF6FF] text-[#1E4DB7] flex items-center justify-center font-semibold">
-            <UserPlus className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-[#0F172A] leading-tight">
-              Patient Intake & Check-In
-            </h2>
-            <p className="text-[11px] text-[#64748B] leading-tight">
-              Quick registration for walk-in outpatient queue
-            </p>
-          </div>
-        </div>
+    <div className={`w-full bg-white border border-neutral-slate-200 rounded-lg p-4 shadow-clinic-sm space-y-3 ${className}`}>
+      <h2 className="text-[13px] font-bold text-primary-navy uppercase tracking-[0.06em]">
+        CHECK IN NEW PATIENT
+      </h2>
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-          <span className="px-2 py-0.5 rounded bg-[#F1F5F9] text-[#334155] text-[11px]">
-            Mode: Walk-In
-          </span>
-        </div>
-      </div>
-
-      {/* Alert Banner Container */}
+      {/* Alert Banner */}
       {alertState && (
         <div className="space-y-2">
           <AlertBanner
@@ -142,72 +122,67 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
         </div>
       )}
 
-      {/* Horizontal Check-in Form */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        {/* Patient Name Input */}
-        <div className="md:col-span-5">
-          <Input
-            label="Patient Full Name"
-            placeholder="e.g. Tendai Chikore"
-            value={fullName}
-            onChange={(e) => {
-              setFullName(e.target.value);
-              if (fieldErrors.fullName) setFieldErrors({ ...fieldErrors, fullName: undefined });
-            }}
-            error={fieldErrors.fullName}
-            icon={<User className="w-4 h-4 text-[#64748B]" />}
-            isRequired
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* Reason for Visit Input */}
-        <div className="md:col-span-4">
-          <Input
-            label="Reason for Visit"
-            placeholder="e.g. Severe Headache, General Checkup"
-            value={reason}
-            onChange={(e) => {
-              setReason(e.target.value);
-              if (fieldErrors.reason) setFieldErrors({ ...fieldErrors, reason: undefined });
-            }}
-            error={fieldErrors.reason}
-            icon={<Activity className="w-4 h-4 text-[#64748B]" />}
-            isRequired
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* Urgent Priority Checkbox */}
-        <div className="md:col-span-1.5 flex items-center h-10 mb-0.5">
-          <label className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer select-none transition-colors text-xs font-semibold ${
-            isUrgent 
-              ? "bg-[#FEF2F2] border-[#DC2626] text-[#DC2626]" 
-              : "bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#F1F5F9]"
-          }`}>
-            <input
-              type="checkbox"
-              checked={isUrgent}
-              onChange={(e) => setIsUrgent(e.target.checked)}
+      {/* Form matching reference design */}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+          {/* Patient Name */}
+          <div className="md:col-span-5">
+            <Input
+              label="Patient Name"
+              placeholder="Enter full name"
+              value={fullName}
+              onChange={(e) => {
+                setFullName(e.target.value);
+                if (fieldErrors.fullName) setFieldErrors({ ...fieldErrors, fullName: undefined });
+              }}
+              error={fieldErrors.fullName}
+              isRequired
               disabled={isLoading}
-              className="w-4 h-4 accent-[#DC2626] rounded cursor-pointer"
             />
-            <AlertTriangle className={`w-3.5 h-3.5 ${isUrgent ? "text-[#DC2626]" : "text-[#64748B]"}`} />
-            <span>Urgent</span>
-          </label>
+          </div>
+
+          {/* Reason for Visit */}
+          <div className="md:col-span-5">
+            <Input
+              label="Reason for Visit"
+              placeholder="Briefly describe reason for visit"
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (fieldErrors.reason) setFieldErrors({ ...fieldErrors, reason: undefined });
+              }}
+              error={fieldErrors.reason}
+              isRequired
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Priority */}
+          <div className="md:col-span-2 flex flex-col gap-1.5 text-left">
+            <span className="text-xs font-semibold text-neutral-slate-700">Priority</span>
+            <label className="flex items-center gap-2.5 h-10 cursor-pointer select-none text-xs font-medium text-neutral-slate-700">
+              <input
+                type="checkbox"
+                checked={isUrgent}
+                onChange={(e) => setIsUrgent(e.target.checked)}
+                disabled={isLoading}
+                className="w-4 h-4 text-primary-navy border-neutral-slate-300 rounded focus:ring-primary-blue cursor-pointer"
+              />
+              <span>Urgent / Priority</span>
+            </label>
+          </div>
         </div>
 
-        {/* Submit Action Button */}
-        <div className="md:col-span-1.5 h-10">
+        {/* Submit Button Row - Right Aligned */}
+        <div className="flex justify-end pt-1">
           <Button
             type="submit"
-            variant={isUrgent ? "destructive" : "primary"}
-            fullWidth
+            variant="primary"
             isLoading={isLoading}
             icon={<UserPlus className="w-4 h-4" />}
-            className="h-10"
+            className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider"
           >
-            Check In
+            CHECK IN PATIENT
           </Button>
         </div>
       </form>

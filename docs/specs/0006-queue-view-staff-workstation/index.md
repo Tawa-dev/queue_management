@@ -1,7 +1,7 @@
 # 0006. Queue view (staff workstation)
 
 **Date**: 2026-08-27
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -74,10 +74,10 @@ Queries `Visit` records from PostgreSQL:
 
 ## Build plan
 
-1. Create Server Action `getQueueDataAction` in `src/server/actions/getQueue.ts` querying WAITING visits and summary metrics, satisfies **AC-1**, **AC-2**
-2. Build reactive `QueueTable` component in `src/components/queue/QueueTable.tsx` supporting priority sorting, wait time color coding, search filtering, and empty state, satisfies **AC-2**, **AC-3**, **AC-4**, **AC-6**
-3. Implement live 5 second polling hook in `app/(workstation)/page.tsx` displaying live status timestamp and updating table state, satisfies **AC-5**
-4. Mount real `QueueTable` in `app/(workstation)/page.tsx` replacing mock table data, satisfies **AC-1**, **AC-5**
+1. [x] Create Server Action `getQueueDataAction` in `src/server/actions/getQueue.ts` querying WAITING visits and summary metrics, satisfies **AC-1**, **AC-2**
+2. [x] Build reactive `QueueTable` component in `src/components/queue/QueueTable.tsx` supporting priority sorting, wait time color coding, search filtering, and empty state, satisfies **AC-2**, **AC-3**, **AC-4**, **AC-6**
+3. [x] Implement live 5 second polling hook in `app/(workstation)/page.tsx` displaying live status timestamp and updating table state, satisfies **AC-5**
+4. [x] Mount real `QueueTable` in `app/(workstation)/page.tsx` replacing mock table data, satisfies **AC-1**, **AC-5**
 
 ## Consequences
 

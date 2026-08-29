@@ -2,9 +2,12 @@
 
 @theme {
   --color-primary-navy: #0B2D6B;
+  --color-header-navy: #002761;
   --color-primary-blue: #1E4DB7;
   --color-primary-tint: #EFF6FF;
   --color-primary-tint-alt: #E9F0FF;
+  --color-canvas: #F8F9FB;
+  --color-next-patient: #FEF7EB;
 
   --color-neutral-slate-900: #0F172A;
   --color-neutral-slate-700: #334155;

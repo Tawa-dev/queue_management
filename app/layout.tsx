@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-[#F8FAFC] text-[#0F172A]">
+      <body className="min-h-full flex flex-col font-sans bg-canvas text-neutral-slate-900">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

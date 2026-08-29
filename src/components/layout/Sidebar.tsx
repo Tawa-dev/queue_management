@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Users,
-  LayoutGrid,
+  DoorOpen,
   UsersRound,
   BarChart3,
   Settings,
@@ -15,13 +15,13 @@ import {
 export interface NavItem {
   name: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   section?: "main" | "admin";
 }
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Queue", href: "/queue", icon: Users, section: "main" },
-  { name: "Rooms", href: "/rooms", icon: LayoutGrid, section: "main" },
+  { name: "Rooms", href: "/rooms", icon: DoorOpen, section: "main" },
   { name: "Patients", href: "/patients", icon: UsersRound, section: "admin" },
   { name: "Reports", href: "/reports", icon: BarChart3, section: "admin" },
   { name: "Settings", href: "/settings", icon: Settings, section: "admin" },
@@ -49,11 +49,10 @@ export function Sidebar({
 
   return (
     <aside
-      className={`w-56 sm:w-60 bg-white border-r border-[#E2E8F0] flex flex-col justify-between shrink-0 select-none ${className}`}
+      className={`w-[200px] bg-canvas flex flex-col justify-between shrink-0 select-none ${className}`}
       aria-label="Sidebar navigation"
     >
-      {/* Top: Nav Links */}
-      <div className="p-3 sm:p-4 flex flex-col gap-1">
+      <nav className="pt-3 px-3 flex flex-col gap-1" aria-label="Workstation">
         {NAV_ITEMS.map((item) => {
           const active = isItemActive(item.href);
           const Icon = item.icon;
@@ -61,35 +60,39 @@ export function Sidebar({
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+              className={`relative flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-md text-[14px] transition-colors duration-150 ${
                 active
-                  ? "bg-[#EFF6FF] text-[#0B2D6B] font-semibold border border-[#93C5FD]/40 shadow-xs"
-                  : "text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A]"
+                  ? "bg-[#EDF1FA] text-primary-navy font-semibold"
+                  : "text-primary-navy font-medium hover:bg-white/70"
               }`}
             >
+              {active && (
+                <span
+                  className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-sm bg-primary-navy"
+                  aria-hidden="true"
+                />
+              )}
               <Icon
-                className={`w-5 h-5 shrink-0 ${
-                  active ? "text-[#0B2D6B]" : "text-[#64748B]"
-                }`}
+                className="w-[18px] h-[18px] shrink-0 text-primary-navy"
+                strokeWidth={1.75}
                 aria-hidden="true"
               />
               <span>{item.name}</span>
             </Link>
           );
         })}
-      </div>
+      </nav>
 
-      {/* Bottom: Clinic Help & App Metadata */}
-      <div className="p-4 border-t border-[#F1F5F9] flex flex-col gap-2">
+      <div className="px-4 pb-5 pt-3 flex flex-col gap-3">
         <button
           type="button"
-          className="flex items-center gap-2 text-xs font-medium text-[#1E4DB7] hover:text-[#0B2D6B] transition-colors cursor-pointer text-left"
+          className="flex items-center gap-2 text-[13px] font-medium text-primary-blue hover:text-primary-navy transition-colors cursor-pointer text-left"
         >
-          <HelpCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <HelpCircle className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
           <span>Need help?</span>
         </button>
 
-        <div className="mt-2 flex flex-col text-[11px] text-[#94A3B8] font-mono leading-relaxed">
+        <div className="flex flex-col text-[11px] text-neutral-slate-400 leading-relaxed">
           <span>Queue ID: {queueId}</span>
           <span>Version: {version}</span>
         </div>

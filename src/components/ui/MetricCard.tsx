@@ -15,15 +15,15 @@ export function MetricCard({
   label,
   value,
   icon,
-  iconBgColor = "bg-[#EFF6FF]",
-  iconColor = "text-[#1E4DB7]",
-  valueColor = "text-[#0F172A]",
+  iconBgColor = "bg-primary-tint",
+  iconColor = "text-primary-blue",
+  valueColor = "text-neutral-slate-900",
   subtext,
   className = "",
 }: MetricCardProps) {
   return (
     <div
-      className={`bg-white rounded-lg p-4 border border-[#E2E8F0] shadow-sm flex items-center gap-4 transition-shadow duration-150 hover:shadow-md ${className}`}
+      className={`bg-white rounded-lg p-4 border border-neutral-slate-200 shadow-clinic-sm flex items-center gap-4 ${className}`}
     >
       <div
         className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${iconBgColor} ${iconColor}`}
@@ -32,7 +32,7 @@ export function MetricCard({
         {icon}
       </div>
       <div className="flex flex-col">
-        <span className="text-xs font-medium text-[#64748B] uppercase tracking-wider">
+        <span className="text-xs font-medium text-primary-navy uppercase tracking-wider">
           {label}
         </span>
         <div className="flex items-baseline gap-2">
@@ -40,7 +40,7 @@ export function MetricCard({
             {value}
           </span>
           {subtext && (
-            <span className="text-xs text-[#94A3B8] font-normal">{subtext}</span>
+            <span className="text-xs text-neutral-slate-400 font-normal">{subtext}</span>
           )}
         </div>
       </div>
@@ -54,6 +54,7 @@ export interface MetricBarProps {
     label: string;
     value: number | string;
     icon: React.ReactNode;
+    iconColor?: string;
     valueColor?: string;
     subtext?: string;
   }>;
@@ -63,29 +64,32 @@ export interface MetricBarProps {
 export function MetricBar({ metrics, className = "" }: MetricBarProps) {
   return (
     <div
-      className={`bg-white rounded-lg border border-[#E2E8F0] shadow-sm grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-[#E2E8F0] ${className}`}
+      className={`bg-white rounded-lg border border-neutral-slate-200 shadow-clinic-sm grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-neutral-slate-200 ${className}`}
     >
       {metrics.map((metric) => (
-        <div key={metric.id} className="p-3.5 flex items-center gap-3">
-          <div className="text-[#64748B] shrink-0" aria-hidden="true">
+        <div key={metric.id} className="px-4 py-3.5 flex items-center gap-3 min-w-0">
+          <div
+            className={`shrink-0 ${metric.iconColor || "text-primary-navy"}`}
+            aria-hidden="true"
+          >
             {metric.icon}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] truncate">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary-navy truncate">
               {metric.label}
             </span>
-            <div className="flex items-baseline gap-1.5">
-              {metric.subtext && (
-                <span className="text-xs text-[#94A3B8]">{metric.subtext}</span>
-              )}
-              <span
-                className={`text-xl font-bold ${
-                  metric.valueColor || "text-[#0F172A]"
-                }`}
-              >
-                {metric.value}
+            {metric.subtext && (
+              <span className="text-[11px] text-primary-navy/80 leading-tight truncate">
+                {metric.subtext}
               </span>
-            </div>
+            )}
+            <span
+              className={`text-[28px] font-bold leading-none mt-0.5 ${
+                metric.valueColor || "text-primary-navy"
+              }`}
+            >
+              {metric.value}
+            </span>
           </div>
         </div>
       ))}

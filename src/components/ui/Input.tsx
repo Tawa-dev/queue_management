@@ -6,6 +6,7 @@ export interface InputProps
   helperText?: string;
   error?: string;
   icon?: React.ReactNode;
+  iconPosition?: "left" | "right";
   isRequired?: boolean;
 }
 
@@ -16,6 +17,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       helperText,
       error,
       icon,
+      iconPosition = "left",
       isRequired = false,
       id,
       className = "",
@@ -40,8 +42,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </label>
         )}
         <div className="relative flex items-center">
-          {icon && (
-            <div className="absolute left-3 text-[#64748B] pointer-events-none flex items-center justify-center">
+          {icon && iconPosition === "left" && (
+            <div className="absolute left-3 text-neutral-slate-500 pointer-events-none flex items-center justify-center">
               {icon}
             </div>
           )}
@@ -53,15 +55,24 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={
               error ? errorId : helperText ? helperId : undefined
             }
-            className={`w-full h-10 rounded bg-white text-[#0F172A] text-sm placeholder:text-[#94A3B8] border transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#1E4DB7] focus:border-[#1E4DB7] disabled:bg-[#F1F5F9] disabled:text-[#94A3B8] disabled:cursor-not-allowed ${
-              icon ? "pl-9 pr-3" : "px-3"
+            className={`w-full h-10 rounded-md bg-white text-neutral-slate-900 text-sm placeholder:text-neutral-slate-400 border transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-primary-blue disabled:bg-neutral-slate-100 disabled:text-neutral-slate-400 disabled:cursor-not-allowed ${
+              icon && iconPosition === "left"
+                ? "pl-9 pr-3"
+                : icon && iconPosition === "right"
+                ? "pl-3 pr-9"
+                : "px-3"
             } ${
               error
-                ? "border-[#DC2626] focus:ring-[#DC2626] focus:border-[#DC2626]"
-                : "border-[#CBD5E1] hover:border-[#94A3B8]"
+                ? "border-status-urgent-text focus:ring-status-urgent-text focus:border-status-urgent-text"
+                : "border-neutral-slate-300 hover:border-neutral-slate-400"
             } ${className}`}
             {...props}
           />
+          {icon && iconPosition === "right" && (
+            <div className="absolute right-3 text-neutral-slate-400 pointer-events-none flex items-center justify-center">
+              {icon}
+            </div>
+          )}
         </div>
         {error && (
           <p id={errorId} className="text-xs text-[#DC2626] font-medium" role="alert">

@@ -17,7 +17,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 4 | Design system and UI foundation | Foundation | in-progress |
 | 5 | Auth and roles | Foundation | in-progress |
 | 6 | Patient check-in and queue core | Slice 1 | in-progress |
-| 7 | Queue view (staff workstation) | Slice 1 | planned |
+| 7 | Queue view (staff workstation) | Slice 1 | in-progress |
 | 8 | Room assignment and status | Slice 1 | planned |
 | 9 | On-screen display board | Slice 2 | planned |
 | 10 | PWA offline cache | Slice 3 | planned |
@@ -116,13 +116,21 @@ Check-in form strip at the top of the Queue page. Staff enters patient name, rea
 - [x] Verify it: `/check verify patient check-in and queue core`
 - [x] Test it: `/test patient check-in and queue core`
 
-### 7. Queue view (staff workstation) · needs a decision
+### 7. Queue view (staff workstation) · in-progress
+spec [0006](../specs/0006-queue-view-staff-workstation/index.md) · code in `src/server/actions/getQueue.ts`, `src/components/queue/QueueTable.tsx`
 
-The single home page for most staff. Shows the compact check-in strip at top, the waiting queue table (patient name, wait time, urgent flag, 15+ min flagged visually), and a next patient / assign to room panel. Polling keeps the data live (shows "Live · Updated [time]"). This is a workstation, not a dashboard: the bias is "who is waiting, who is next, what do I do."
+Main staff view. Shows patients waiting by zone, priority flag, check-in time, and elapsed wait time. Includes search/filter inputs and live polling updates.
 
-**Done when:** the queue table shows all waiting patients ordered by priority and check-in time, wait time updates on each poll, 15+ min wait is flagged visually, and "now serving" per room is visible in the assign panel. Empty state renders cleanly.
+**Done when:** the staff queue table renders real waiting visits from DB, updates live every 5s, flags urgent cases at the top, and displays wait time warning thresholds.
 
-- [ ] Design it (spec): `/architect queue view`
+- [x] Design it (spec): `/architect queue view (staff workstation)`
+- [x] Build it: `/develop queue view (staff workstation)`
+  - [x] Create Server Action `getQueueDataAction` in `src/server/actions/getQueue.ts` (satisfies AC-1, AC-2)
+  - [x] Build `QueueTable` component in `src/components/queue/QueueTable.tsx` with priority sorting, wait time thresholds, search filtering, and empty states (satisfies AC-2, AC-3, AC-4, AC-6)
+  - [x] Implement live 5s polling hook and Live status indicator in `app/(workstation)/page.tsx` (satisfies AC-5)
+  - [x] Mount `QueueTable` in `app/(workstation)/page.tsx` replacing mock table data (satisfies AC-1, AC-5)
+- [ ] Verify it: `/check verify queue view (staff workstation)`
+- [ ] Test it: `/test queue view (staff workstation)`
 
 ### 8. Room assignment and status · needs a decision
 

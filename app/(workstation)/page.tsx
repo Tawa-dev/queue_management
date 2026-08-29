@@ -1,285 +1,261 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Users,
   Hourglass,
   UserCheck,
   CheckCircle2,
   XCircle,
-  Search,
-  Tv,
   RefreshCw,
   Clock,
+  ArrowRight,
 } from "lucide-react";
-import {
-  Button,
-  Input,
-  Badge,
-  AlertBanner,
-  MetricBar,
-} from "@/components/ui";
+import { Button, Badge, MetricBar } from "@/components/ui";
 import { CheckInStrip } from "@/components/queue/CheckInStrip";
+import { QueueTable } from "@/components/queue/QueueTable";
+import { getQueueDataAction, QueueVisitItem, QueueSummaryMetrics } from "@/server/actions/getQueue";
+
+const MOCK_RECENT_ASSIGNMENTS = [
+  { time: "10:21 AM", ticket: "22", name: "R. MAPHOSA", room: "Consult Room 1" },
+  { time: "10:18 AM", ticket: "21", name: "L. MANYIKA", room: "Consult Room 2" },
+  { time: "10:15 AM", ticket: "20", name: "P. NDLOVU", room: "Treatment Room 1" },
+];
+
+const ROOMS = [
+  { id: "r1", name: "Consult Room 1", nurse: "N. Chikomo", status: "available" as const },
+  { id: "r2", name: "Consult Room 2", nurse: "P. Mutasa", status: "available" as const },
+  { id: "r3", name: "Consult Room 3", nurse: "S. Dube", status: "busy" as const },
+  { id: "r4", name: "Treatment Room 1", nurse: "L. Moyo", status: "available" as const },
+  { id: "r5", name: "Treatment Room 2", nurse: "R. Zvidzai", status: "busy" as const },
+];
 
 export default function WorkstationHomePage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showAlert, setShowAlert] = useState(true);
+  const [visits, setVisits] = useState<QueueVisitItem[]>([]);
+  const [summary, setSummary] = useState<QueueSummaryMetrics>({
+    todayCount: 0,
+    waitingCount: 0,
+    inConsultationCount: 0,
+    seenCount: 0,
+    dnaCount: 0,
+  });
+  const [lastUpdated, setLastUpdated] = useState<string>("Initializing...");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [now, setNow] = useState<Date>(new Date());
+
+  const fetchQueueData = useCallback(async () => {
+    try {
+      const res = await getQueueDataAction();
+      if (res.success) {
+        setVisits(res.visits);
+        setSummary(res.summary);
+        setLastUpdated(res.lastUpdated);
+      }
+    } catch (err) {
+      console.error("Failed to fetch live queue data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchQueueData();
+    }, 0);
+    const intervalId = setInterval(fetchQueueData, 5000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [fetchQueueData]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const summaryMetrics = [
     {
       id: "today",
-      label: "Today",
-      value: 56,
+      label: "TODAY",
+      value: summary.todayCount,
       subtext: "Total checked in",
-      icon: <Users className="w-5 h-5 text-[#1E4DB7]" />,
-      valueColor: "text-[#0B2D6B]",
+      icon: <Users className="w-5 h-5" strokeWidth={1.75} />,
+      iconColor: "text-primary-navy",
+      valueColor: "text-primary-navy",
     },
     {
       id: "waiting",
-      label: "Waiting",
-      value: 22,
-      icon: <Hourglass className="w-5 h-5 text-[#F97316]" />,
-      valueColor: "text-[#F97316]",
+      label: "WAITING",
+      value: summary.waitingCount,
+      icon: <Hourglass className="w-5 h-5" strokeWidth={1.75} />,
+      iconColor: "text-status-waiting-text",
+      valueColor: "text-status-waiting-text",
     },
     {
       id: "consulting",
-      label: "In Consultation",
-      value: 12,
-      icon: <UserCheck className="w-5 h-5 text-[#1D4ED8]" />,
-      valueColor: "text-[#1D4ED8]",
+      label: "IN CONSULTATION",
+      value: summary.inConsultationCount,
+      icon: <UserCheck className="w-5 h-5" strokeWidth={1.75} />,
+      iconColor: "text-primary-navy",
+      valueColor: "text-primary-navy",
     },
     {
       id: "seen",
-      label: "Seen",
-      value: 34,
-      icon: <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />,
-      valueColor: "text-[#16A34A]",
+      label: "SEEN",
+      value: summary.seenCount,
+      icon: <CheckCircle2 className="w-5 h-5" strokeWidth={1.75} />,
+      iconColor: "text-status-seen-text",
+      valueColor: "text-status-seen-text",
     },
     {
       id: "dna",
-      label: "Did Not Attend",
-      value: 2,
-      icon: <XCircle className="w-5 h-5 text-[#475569]" />,
-      valueColor: "text-[#475569]",
+      label: "DID NOT ATTEND",
+      value: summary.dnaCount,
+      icon: <XCircle className="w-5 h-5" strokeWidth={1.75} />,
+      iconColor: "text-primary-navy",
+      valueColor: "text-primary-navy",
     },
   ];
 
+  const nextPatient = visits.length > 0 ? visits[0] : null;
+
+  const nextPatientWaitMins = nextPatient
+    ? Math.max(0, Math.floor((now.getTime() - new Date(nextPatient.checkInTime).getTime()) / 60000))
+    : 0;
+
+  const nextWaitColor =
+    nextPatientWaitMins >= 12 ? "text-status-urgent-text font-bold" : "text-status-waiting-text font-bold";
+
   return (
-    <div className="space-y-6 pb-12">
-      {/* 1. Page Header & Quick Links */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-[#0B2D6B]">
-              Outpatient Queue Workstation
-            </h1>
-            <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-[#ECFDF5] text-[#16A34A] border border-[#86EFAC]/40">
-              Live Workstation
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-            Mabvuku Polyclinic Outpatient Triage & Consultation Workstation
-          </p>
-        </div>
+    <div className="space-y-3 pb-4">
+      <h1 className="sr-only">Outpatient Queue Workstation — Mabvuku Polyclinic</h1>
 
-        <div className="flex items-center gap-3">
-          <Link href="/display/zone-a" target="_blank">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Tv className="w-4 h-4 text-[#0B2D6B]" />}
-            >
-              Open TV Display Board
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* 2. Top Summary Metric Bar */}
       <section aria-labelledby="metrics-heading">
         <h2 id="metrics-heading" className="sr-only">Queue Summary Metrics</h2>
         <MetricBar metrics={summaryMetrics} />
       </section>
 
-      {/* 3. System Announcement Alert */}
-      {showAlert && (
-        <section aria-label="System Announcements">
-          <AlertBanner
-            type="info"
-            message="Check-in pipeline active: Submitting the intake strip persists real patient and visit records."
-            onDismiss={() => setShowAlert(false)}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] gap-4">
+        <div className="space-y-3 min-w-0">
+          <CheckInStrip onCheckInSuccess={fetchQueueData} />
+          <QueueTable
+            visits={visits}
+            lastUpdated={lastUpdated}
+            isLoading={isLoading}
+            onRefresh={fetchQueueData}
           />
-        </section>
-      )}
-
-      {/* 4. Main Workstation Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Check-in Strip & Waiting Queue */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Real Patient Check-In Strip Component */}
-          <CheckInStrip />
-
-          {/* Waiting Queue Table Preview */}
-          <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F8FAFC]">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-[#0F172A]">
-                  Waiting Queue
-                </h3>
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#EFF6FF] text-[#1E4DB7]">
-                  22
-                </span>
-              </div>
-
-              <div className="w-full sm:w-64">
-                <Input
-                  placeholder="Search by name or number..."
-                  icon={<Search className="w-4 h-4" />}
-                  value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#F1F5F9] text-[#64748B] uppercase font-semibold tracking-wider border-b border-[#E2E8F0]">
-                  <tr>
-                    <th scope="col" className="px-4 py-3">#</th>
-                    <th scope="col" className="px-4 py-3">Patient</th>
-                    <th scope="col" className="px-4 py-3">Reason For Visit</th>
-                    <th scope="col" className="px-4 py-3">Arrived</th>
-                    <th scope="col" className="px-4 py-3">Waiting</th>
-                    <th scope="col" className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E2E8F0] text-[#0F172A]">
-                  <tr className="bg-[#FFFBEB]/60 hover:bg-[#FFFBEB] transition-colors font-medium">
-                    <td className="px-4 py-3 text-sm font-bold text-[#F97316]">23</td>
-                    <td className="px-4 py-3 font-semibold">T. CHIMWEMWE</td>
-                    <td className="px-4 py-3 text-[#475569]">Back pain</td>
-                    <td className="px-4 py-3 text-[#64748B]">10:12 AM</td>
-                    <td className="px-4 py-3 font-bold text-[#DC2626]">12 min</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="waiting" size="sm" />
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-4 py-3 text-sm font-bold text-[#1E4DB7]">24</td>
-                    <td className="px-4 py-3 font-semibold">S. MPOFU</td>
-                    <td className="px-4 py-3 text-[#475569]">Headache</td>
-                    <td className="px-4 py-3 text-[#64748B]">10:14 AM</td>
-                    <td className="px-4 py-3 font-bold text-[#DC2626]">10 min</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="waiting" size="sm" />
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-4 py-3 text-sm font-bold text-[#1E4DB7]">25</td>
-                    <td className="px-4 py-3 font-semibold">A. ZHOU</td>
-                    <td className="px-4 py-3 text-[#475569]">Flu symptoms</td>
-                    <td className="px-4 py-3 text-[#64748B]">10:16 AM</td>
-                    <td className="px-4 py-3 font-semibold text-[#F97316]">8 min</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="waiting" size="sm" />
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="px-4 py-3 text-sm font-bold text-[#1E4DB7]">26</td>
-                    <td className="px-4 py-3 font-semibold">M. NGWENYA</td>
-                    <td className="px-4 py-3 text-[#475569]">Stomach pain</td>
-                    <td className="px-4 py-3 text-[#64748B]">10:18 AM</td>
-                    <td className="px-4 py-3 text-[#475569]">6 min</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="waiting" size="sm" />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
 
-        {/* Right 1 Col: Next Patient & Room Assignment Panel */}
-        <div className="space-y-6">
-          {/* Next Patient Callout Card */}
-          <div className="bg-white p-5 rounded-lg border border-[#FDBA74]/50 shadow-sm bg-gradient-to-br from-white to-[#FFFBEB]/40">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#F97316]">
+        <div className="space-y-3">
+          <div className="bg-next-patient rounded-lg border border-[#F3E4C8] p-4">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-status-waiting-text">
               Next Patient
-            </span>
-            <div className="mt-2 flex items-baseline gap-3">
-              <span className="text-3xl font-extrabold text-[#F97316]">#23</span>
-              <span className="text-base font-bold text-[#0F172A]">T. CHIMWEMWE</span>
-            </div>
-            <p className="text-xs text-[#64748B] mt-0.5">Reason: Back pain</p>
-            <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-[#DC2626]">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Waiting 12 min</span>
-            </div>
+            </p>
+            {nextPatient ? (
+              <div className="mt-2">
+                <div className="flex items-start gap-3">
+                  <span className="text-[32px] font-extrabold text-status-waiting-text leading-none">
+                    #{nextPatient.ticketNumber}
+                  </span>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-[14px] font-bold text-primary-navy uppercase truncate">
+                      {nextPatient.patientName}
+                    </p>
+                    <p className="text-[13px] text-primary-navy truncate">{nextPatient.reason}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[13px]">
+                  <Clock className="w-4 h-4 text-status-waiting-text shrink-0" strokeWidth={1.75} />
+                  <span className="text-primary-navy">Waiting</span>
+                  <span className={nextWaitColor}>{nextPatientWaitMins} min</span>
+                </div>
+                {nextPatient.isUrgent && (
+                  <div className="mt-2">
+                    <Badge variant="urgent" size="sm" showDefaultIcon={false} />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-neutral-slate-500">
+                No patients currently waiting for consultation.
+              </p>
+            )}
           </div>
 
-          {/* Room Allocation Panel */}
-          <div className="bg-white p-5 rounded-lg border border-[#E2E8F0] shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B2D6B]">
+          <div className="bg-white rounded-lg border border-neutral-slate-200 shadow-clinic-sm overflow-hidden">
+            <div className="p-4">
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary-navy mb-3">
                 Assign to Available Room
               </h3>
-              <button
-                type="button"
-                className="text-xs text-[#1E4DB7] hover:underline flex items-center gap-1"
-                onClick={() => alert("Room statuses updated")}
-              >
-                <RefreshCw className="w-3 h-3" />
-                Refresh
-              </button>
+              <div className="space-y-2">
+                {ROOMS.map((room) => (
+                  <div
+                    key={room.id}
+                    className="px-3 py-2.5 rounded-md border border-neutral-slate-200 bg-white flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <h4 className="text-[13px] font-bold text-primary-navy leading-tight">{room.name}</h4>
+                      <p className="text-[11px] text-primary-navy/70">Nurse: {room.nurse}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge
+                        variant={room.status === "available" ? "available" : "busy"}
+                        size="sm"
+                        showDefaultIcon={false}
+                      />
+                      {room.status === "available" ? (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => alert(`Assign next patient to ${room.name}`)}
+                          className="uppercase tracking-wide font-semibold"
+                        >
+                          Assign
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-neutral-slate-400 px-3">—</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex justify-center">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  icon={<RefreshCw className="w-3.5 h-3.5" />}
+                  onClick={fetchQueueData}
+                  className="text-primary-navy border-primary-navy/40"
+                >
+                  Update Room Status
+                </Button>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="p-3 rounded border border-[#E2E8F0] flex items-center justify-between gap-2 bg-[#F8FAFC]">
-                <div>
-                  <h4 className="text-xs font-bold text-[#0F172A]">Consult Room 1</h4>
-                  <p className="text-[11px] text-[#64748B]">Nurse: N. Chikomo</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="available" size="sm" />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => alert("Assigned to Room 1")}
-                  >
-                    Assign
-                  </Button>
-                </div>
+            <div className="border-t border-neutral-slate-200 px-4 py-3">
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary-navy">
+                  Recent Assignments
+                </h3>
+                <button
+                  type="button"
+                  className="text-[12px] text-primary-navy hover:underline cursor-pointer"
+                >
+                  View all
+                </button>
               </div>
-
-              <div className="p-3 rounded border border-[#E2E8F0] flex items-center justify-between gap-2 bg-[#F8FAFC]">
-                <div>
-                  <h4 className="text-xs font-bold text-[#0F172A]">Consult Room 2</h4>
-                  <p className="text-[11px] text-[#64748B]">Nurse: P. Mutasa</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="available" size="sm" />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => alert("Assigned to Room 2")}
-                  >
-                    Assign
-                  </Button>
-                </div>
-              </div>
-
-              <div className="p-3 rounded border border-[#E2E8F0] flex items-center justify-between gap-2 bg-[#FFF7ED]/30 opacity-75">
-                <div>
-                  <h4 className="text-xs font-bold text-[#0F172A]">Consult Room 3</h4>
-                  <p className="text-[11px] text-[#64748B]">Nurse: S. Dube</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="busy" size="sm" />
-                  <span className="text-xs text-[#94A3B8] px-2 font-mono">-</span>
-                </div>
+              <div className="space-y-2">
+                {MOCK_RECENT_ASSIGNMENTS.map((assignment, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5 text-[11px] text-primary-navy">
+                    <span className="w-[62px] shrink-0">{assignment.time}</span>
+                    <span className="font-bold shrink-0">#{assignment.ticket}</span>
+                    <span className="font-semibold truncate">{assignment.name}</span>
+                    <ArrowRight className="w-3 h-3 text-neutral-slate-400 shrink-0" />
+                    <span className="truncate">{assignment.room}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
