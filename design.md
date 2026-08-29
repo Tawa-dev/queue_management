@@ -49,3 +49,13 @@
   - md: `0 4px 12px -2px rgba(15, 23, 42, 0.08)`
   - lg: `0 12px 24px -4px rgba(15, 23, 42, 0.10)`
   - xl: `0 20px 40px -8px rgba(15, 23, 42, 0.12)`
+
+## On-Screen Display Board (Feature 9)
+
+**Reference screenshot**: `design/waiting area.png` — this is the source of truth.
+
+> **Mandate**: The display board UI must match `design/waiting area.png` exactly — layout, spacing, typography, colors, and all visual states. Do not invent a new layout or deviate from the screenshot. Extract every detail from the image before writing a single line of UI code. This applies to both `/architect` (spec) and `/develop` (build).
+
+The waiting area screen is a large-format, TV-sized, read-only display intended for the patient waiting room. It is structurally different from the staff workstation screens, so it gets its own reference image rather than inheriting the workstation layout.
+
+When building Feature 9, read `design/waiting area.png` as the first step and pin every layout section, color, and typographic choice to what is visible in that image before making any design decision.

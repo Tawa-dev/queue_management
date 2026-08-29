@@ -18,7 +18,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 5 | Auth and roles | Foundation | in-progress |
 | 6 | Patient check-in and queue core | Slice 1 | in-progress |
 | 7 | Queue view (staff workstation) | Slice 1 | in-progress |
-| 8 | Room assignment and status | Slice 1 | planned |
+| 8 | Room assignment and status | Slice 1 | in-progress |
 | 9 | On-screen display board | Slice 2 | planned |
 | 10 | PWA offline cache | Slice 3 | planned |
 | 11 | Admin dashboard and reporting | Deferred | planned |
@@ -132,19 +132,31 @@ Main staff view. Shows patients waiting by zone, priority flag, check-in time, a
 - [ ] Verify it: `/check verify queue view (staff workstation)`
 - [ ] Test it: `/test queue view (staff workstation)`
 
-### 8. Room assignment and status · needs a decision
+### 8. Room assignment and status · in-progress
+spec [0007](../specs/0007-room-assignment-and-status/index.md) · code in `src/server/actions/assignRoom.ts`, `src/server/actions/completeVisit.ts`, `src/server/actions/getRooms.ts`, `src/components/queue/RoomAssignPanel.tsx`, `app/(workstation)/rooms/page.tsx`
 
-Staff explicitly press an "Assign" button per room to call the next patient to that room. The room status flips to occupied and the visit status moves to `in-room`. Staff can mark a consultation complete to free the room. Room list lives on its own Rooms page (secondary nav item). Assignment history is behind a "View history" link, not on the main queue page.
+Staff explicitly press an "Assign" button per room to call the next patient to that room. The room status flips to `OCCUPIED` and the visit status moves to `IN_ROOM`. Staff can mark a consultation complete to free the room back to `FREE`. Room list lives on its own Rooms page at `/rooms`. The quick-assign panel on the workstation home page is wired to the same real actions. No schema changes required.
 
 **Done when:** an available room shows an Assign button; pressing it assigns the first-in-queue patient to that room and updates both the room and visit status in real time (next poll); the room flips back to free when the visit is marked complete; a Rooms page shows all rooms and their current status.
 
-- [ ] Design it (spec): `/architect room assignment and status`
+- [x] Design it (spec): `/architect room assignment and status`
+- [ ] Build it: `/develop room assignment and status`
+  - [x] Create `getRoomsAction` in `src/server/actions/getRooms.ts` returning `RoomItem[]` with active visit data for occupied rooms (satisfies AC-4)
+  - [x] Create `assignRoomAction` in `src/server/actions/assignRoom.ts` — authenticated, role-gated (DOCTOR, ADMIN), transactional assign of queue head to room (satisfies AC-1, AC-3, AC-7)
+  - [x] Create `completeVisitAction` in `src/server/actions/completeVisit.ts` — authenticated, role-gated, transactional visit completion and room release (satisfies AC-2, AC-3, AC-7)
+  - [x] Build `RoomAssignPanel` component in `src/components/queue/RoomAssignPanel.tsx` replacing mock rooms panel with live data and Assign/Complete callbacks (satisfies AC-6)
+  - [x] Wire `RoomAssignPanel` into `app/(workstation)/page.tsx` replacing mock constants with real `getRoomsAction` data and action callbacks (satisfies AC-6, AC-7)
+  - [x] Create Rooms page at `app/(workstation)/rooms/page.tsx` with 10-second poll, full room grid, Assign/Complete actions, and empty state (satisfies AC-5)
+- [x] Verify it: `/check verify room assignment and status`
+- [ ] Test it: `/test room assignment and status`
 
 ## Slice 2: On-screen display board
 
 ### 9. On-screen display board · needs a decision
 
 A separate, TV-sized, read-only page for each clinic zone (two zones in the demo: Block A General and Block B Maternal and Child Health). Shows who is now serving in each room within that zone and the next few patients waiting. Polling keeps it live. Voice announcement via the browser Web Speech API (`SpeechSynthesis`) reads the queue number and assigned room aloud when a patient status changes to `now serving`. Works on a standard browser with no internet connection once the page is loaded (cached queue state for the display view).
+
+> **UI reference**: `design/waiting area.png` — the display board must match this screenshot exactly. Read it before writing any spec or code for this feature.
 
 **Done when:** navigating to `/display/[zone]` renders the correct zone's "now serving" and waiting list; a status change triggers a voice utterance; the page updates on each poll without a manual refresh; and the display still renders with the cached state when the network drops mid-session.
 
