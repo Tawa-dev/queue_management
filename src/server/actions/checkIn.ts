@@ -46,11 +46,17 @@ export async function checkInPatientAction(
       };
     }
 
-    // Resolve target clinic Zone ID (use user's assigned zone or fallback to Block A)
+    // Start of today — computed once, reused for both duplicate check and ticket count
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Resolve zone ID outside the transaction to avoid a nested async round-trip.
+    // Most staff have zoneId in their JWT; only zone-less admins hit the DB here.
     let zoneId = session.user.zoneId;
     if (!zoneId) {
       const defaultZone = await db.zone.findFirst({
         where: { code: "A" },
+        select: { id: true },          // only fetch the id column
       });
       if (!defaultZone) {
         return {
@@ -61,11 +67,8 @@ export async function checkInPatientAction(
       zoneId = defaultZone.id;
     }
 
-    // Start of today for ticket sequencing and duplicate checking
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    // Duplicate check: check if same patient name has an active WAITING visit in this zone today
+    // Duplicate check: join-free — query visits directly on patientName via patient relation.
+    // Runs before the transaction so we can bail early without holding a DB connection.
     if (!input.bypassDuplicateWarning) {
       const existingVisit = await db.visit.findFirst({
         where: {
@@ -76,7 +79,7 @@ export async function checkInPatientAction(
             fullName: { equals: fullName, mode: "insensitive" },
           },
         },
-        include: { patient: true },
+        select: { ticketNumber: true },   // only need the ticket number for the warning
       });
 
       if (existingVisit) {
@@ -88,69 +91,64 @@ export async function checkInPatientAction(
       }
     }
 
-    // Transaction for atomic sequence generation and visit creation
-    const result = await db.$transaction(async (tx) => {
-      // Find or create Patient
-      let patient = await tx.patient.findFirst({
-        where: {
-          fullName: { equals: fullName, mode: "insensitive" },
-        },
-      });
-
-      if (!patient) {
-        patient = await tx.patient.create({
-          data: {
-            fullName,
-            phone,
-          },
-        });
-      } else if (phone && !patient.phone) {
-        // Update phone if previously missing
-        patient = await tx.patient.update({
-          where: { id: patient.id },
-          data: { phone },
-        });
-      }
-
-      // Generate daily sequence ticket number per zone
-      const todayVisitsCount = await tx.visit.count({
-        where: {
-          zoneId,
-          checkInTime: { gte: startOfDay },
-        },
-      });
-
-      const nextSeqNumber = todayVisitsCount + 1;
-      const ticketNumber = `${nextSeqNumber}`;
-
-      // Create Visit record with status WAITING
-      const visit = await tx.visit.create({
-        data: {
-          ticketNumber,
-          patientId: patient.id,
-          zoneId,
-          reason,
-          isUrgent,
-          status: "WAITING",
-          createdById: session.user.id,
-        },
-      });
-
-      return {
-        visitId: visit.id,
-        ticketNumber: visit.ticketNumber,
-        patientName: patient.fullName,
-      };
+    // ── Step 1: resolve or create the patient record OUTSIDE the transaction.
+    // Patient find/create does not need to be atomic with visit creation.
+    // Keeping it outside means the transaction only ever runs 2 fast queries.
+    let patient = await db.patient.findFirst({
+      where: { fullName: { equals: fullName, mode: "insensitive" } },
+      select: { id: true, fullName: true, phone: true },
     });
 
-    revalidatePath("/");
+    if (!patient) {
+      patient = await db.patient.create({
+        data: { fullName, phone },
+        select: { id: true, fullName: true, phone: true },
+      });
+    } else if (phone && !patient.phone) {
+      patient = await db.patient.update({
+        where: { id: patient.id },
+        data: { phone },
+        select: { id: true, fullName: true, phone: true },
+      });
+    }
+
+    // ── Step 2: atomically count today's visits and create the new visit.
+    // Only these two queries need a transaction (for sequential ticket numbering).
+    // With patient already resolved, this is just 2 round-trips inside the tx.
+    const patientId = patient.id;
+    const patientName = patient.fullName;
+
+    const result = await db.$transaction(
+      async (tx) => {
+        const todayCount = await tx.visit.count({
+          where: { zoneId: zoneId!, checkInTime: { gte: startOfDay } },
+        });
+
+        const visit = await tx.visit.create({
+          data: {
+            ticketNumber: `${todayCount + 1}`,
+            patientId,
+            zoneId: zoneId!,
+            reason,
+            isUrgent,
+            status: "WAITING",
+            createdById: session.user.id,
+          },
+          select: { id: true, ticketNumber: true },
+        });
+
+        return { visitId: visit.id, ticketNumber: visit.ticketNumber };
+      },
+      { timeout: 15_000 } // generous ceiling; 2 queries should complete in <2 s
+    );
+
     revalidatePath("/queue");
 
     return {
       success: true,
       visitId: result.visitId,
       ticketNumber: result.ticketNumber,
-      patientName: result.patientName,
+      patientName,
     };
   } catch (err: any) {
     console.error("Error in checkInPatientAction:", err);

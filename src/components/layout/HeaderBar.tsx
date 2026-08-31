@@ -15,9 +15,9 @@ export interface HeaderBarProps {
 }
 
 export function HeaderBar({
-  userName: fallbackName = "R. Moyo",
-  userRole: fallbackRole = "Receptionist",
-  userInitials: fallbackInitials = "RM",
+  userName: fallbackName = "Staff Member",
+  userRole: fallbackRole = "Staff",
+  userInitials: fallbackInitials = "ST",
   isOnline = true,
   clinicName = "MABVUKU POLYCLINIC",
   subtitle = "Outpatient Queue Management",
@@ -28,12 +28,15 @@ export function HeaderBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeName = session?.user?.name || fallbackName;
-  const activeRole = session?.user?.role || fallbackRole;
+  const rawRole = session?.user?.role || fallbackRole;
+  const activeRole =
+    rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase();
 
   const activeInitials = activeName
     ? activeName
         .split(" ")
         .map((part) => part[0])
+        .filter(Boolean)
         .join("")
         .toUpperCase()
         .slice(0, 2)

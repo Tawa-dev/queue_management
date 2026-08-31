@@ -34,58 +34,58 @@ export async function assignRoomAction(
       return { success: false, error: "Room ID is required." };
     }
 
-    const result = await db.$transaction(async (tx) => {
-      // Fetch the room and validate it exists and is FREE
-      const room = await tx.room.findUnique({ where: { id: roomId } });
-      if (!room) {
-        throw new Error("Room not found.");
-      }
-      if (room.status === "OCCUPIED") {
-        throw new Error("Room is already occupied.");
-      }
+    // ── Step 1: read-only queries OUTSIDE the transaction.
+    // Fetching room and next visit does not need to be atomic — we just need
+    // the IDs. The transaction only runs the two write operations.
+    const room = await db.room.findUnique({
+      where: { id: roomId },
+      select: { id: true, name: true, zoneId: true, status: true },
+    });
+    if (!room) {
+      return { success: false, error: "Room not found." };
+    }
+    if (room.status === "OCCUPIED") {
+      return { success: false, error: "Room is already occupied." };
+    }
 
-      // Find the queue head for this zone: urgent first, then oldest check-in
-      const nextVisit = await tx.visit.findFirst({
-        where: { zoneId: room.zoneId, status: "WAITING" },
-        orderBy: [{ isUrgent: "desc" }, { checkInTime: "asc" }],
-        include: { patient: true },
-      });
+    const nextVisit = await db.visit.findFirst({
+      where: { zoneId: room.zoneId, status: "WAITING" },
+      orderBy: [{ isUrgent: "desc" }, { checkInTime: "asc" }],
+      select: {
+        id: true,
+        ticketNumber: true,
+        patient: { select: { fullName: true } },
+      },
+    });
+    if (!nextVisit) {
+      return { success: false, error: "No patients currently waiting in this zone." };
+    }
 
-      if (!nextVisit) {
-        throw new Error("No patients currently waiting in this zone.");
-      }
-
-      const now = new Date();
-
-      // Atomically update visit and room together
-      const [updatedVisit] = await Promise.all([
-        tx.visit.update({
+    // ── Step 2: atomic writes only — 2 queries, no sequential async inside tx.
+    const now = new Date();
+    await db.$transaction(
+      [
+        db.visit.update({
           where: { id: nextVisit.id },
-          data: {
-            status: "IN_ROOM",
-            roomId: room.id,
-            calledTime: now,
-          },
+          data: { status: "IN_ROOM", roomId: room.id, calledTime: now },
         }),
-        tx.room.update({
+        db.room.update({
           where: { id: room.id },
           data: { status: "OCCUPIED" },
         }),
-      ]);
+      ]
+    );
 
-      return {
-        visitId: updatedVisit.id,
-        ticketNumber: updatedVisit.ticketNumber,
-        patientName: nextVisit.patient.fullName,
-        roomName: room.name,
-      };
-    });
-
-    revalidatePath("/");
     revalidatePath("/queue");
     revalidatePath("/rooms");
 
-    return { success: true, ...result };
+    return {
+      success: true,
+      visitId: nextVisit.id,
+      ticketNumber: nextVisit.ticketNumber,
+      patientName: nextVisit.patient.fullName,
+      roomName: room.name,
+    };
   } catch (err: any) {
     console.error("Error in assignRoomAction:", err);
     return {

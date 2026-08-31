@@ -8,7 +8,9 @@ import {
   Clock,
   Hourglass,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { Button, Badge, AlertBanner } from "@/components/ui";
 import { getRoomsAction, RoomItem, RecentAssignment } from "@/server/actions/getRooms";
 import { assignRoomAction } from "@/server/actions/assignRoom";
@@ -35,6 +37,8 @@ function elapsedClass(mins: number): string {
 // Page
 // ---------------------------------------------------------------------------
 export default function RoomsPage() {
+  const { data: session } = useSession();
+  const canAssign = session?.user?.role !== "RECEPTIONIST";
   const [rooms, setRooms] = useState<RoomItem[]>([]);
   const [recentAssignments, setRecentAssignments] = useState<RecentAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -183,6 +187,14 @@ export default function RoomsPage() {
         />
       )}
 
+      {/* Role notice — shown instantly from JWT, no server round-trip */}
+      {!canAssign && (
+        <div className="flex items-center gap-1.5 rounded-md bg-[#FFF7ED] border border-[#FDBA74]/50 px-3 py-2 text-[12px] text-[#92400E]">
+          <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span>Room assignment is restricted to Doctor and Admin roles. You can view room status but cannot assign patients.</span>
+        </div>
+      )}
+
       {/* Room grid */}
       {isLoading ? (
         <RoomsLoadingSkeleton />
@@ -202,6 +214,7 @@ export default function RoomsPage() {
                 room.activeVisit != null && loadingVisitId === room.activeVisit.id
               }
               isAnyActionRunning={isAnyActionRunning}
+              canAssign={canAssign}
               onAssign={handleAssign}
               onComplete={handleComplete}
             />
@@ -260,6 +273,7 @@ interface RoomCardProps {
   isAssigning: boolean;
   isCompleting: boolean;
   isAnyActionRunning: boolean;
+  canAssign: boolean;
   onAssign: (roomId: string) => void;
   onComplete: (visitId: string) => void;
 }
@@ -269,6 +283,7 @@ function RoomCard({
   isAssigning,
   isCompleting,
   isAnyActionRunning,
+  canAssign,
   onAssign,
   onComplete,
 }: RoomCardProps) {
@@ -370,9 +385,14 @@ function RoomCard({
             fullWidth
             onClick={() => onAssign(room.id)}
             isLoading={isAssigning}
-            disabled={isAnyActionRunning}
+            disabled={isAnyActionRunning || !canAssign}
             className="uppercase tracking-wide font-semibold"
-            aria-label={`Assign next patient to ${room.name}`}
+            aria-label={
+              canAssign
+                ? `Assign next patient to ${room.name}`
+                : "Room assignment requires Doctor or Admin role"
+            }
+            title={!canAssign ? "Requires Doctor or Admin role" : undefined}
           >
             Assign Next Patient
           </Button>

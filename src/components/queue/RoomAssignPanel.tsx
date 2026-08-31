@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Lock } from "lucide-react";
 import { Button, Badge, AlertBanner } from "@/components/ui";
 import { RoomItem, RecentAssignment } from "@/server/actions/getRooms";
 import { assignRoomAction } from "@/server/actions/assignRoom";
@@ -12,6 +12,12 @@ export interface RoomAssignPanelProps {
   recentAssignments: RecentAssignment[];
   /** Called after a successful assign or complete so the parent can re-fetch */
   onActionSuccess: () => void;
+  /**
+   * The current user's role from the session.
+   * Receptionists cannot assign rooms — the button is disabled client-side
+   * immediately, without a server round-trip.
+   */
+  userRole?: string;
   className?: string;
 }
 
@@ -34,6 +40,7 @@ export function RoomAssignPanel({
   rooms,
   recentAssignments,
   onActionSuccess,
+  userRole,
   className = "",
 }: RoomAssignPanelProps) {
   const [loadingRoomId, setLoadingRoomId] = useState<string | null>(null);
@@ -42,6 +49,10 @@ export function RoomAssignPanel({
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  // Receptionist role cannot assign rooms — gate client-side so the UI
+  // responds instantly instead of waiting for a server round-trip error.
+  const canAssign = userRole !== "RECEPTIONIST";
 
   const handleAssign = async (roomId: string) => {
     setLoadingRoomId(roomId);
@@ -95,6 +106,14 @@ export function RoomAssignPanel({
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary-navy">
           Assign to Available Room
         </h3>
+
+        {/* Role notice — shown immediately from session, no server call needed */}
+        {!canAssign && (
+          <div className="flex items-center gap-1.5 rounded-md bg-[#FFF7ED] border border-[#FDBA74]/50 px-2.5 py-1.5 text-[11px] text-[#92400E]">
+            <Lock className="w-3 h-3 shrink-0" aria-hidden="true" />
+            <span>Room assignment is restricted to Doctor and Admin roles.</span>
+          </div>
+        )}
 
         {alert && (
           <AlertBanner
@@ -161,9 +180,18 @@ export function RoomAssignPanel({
                         size="sm"
                         onClick={() => handleAssign(room.id)}
                         isLoading={isAssigning}
-                        disabled={isAnyActionRunning}
+                        disabled={isAnyActionRunning || !canAssign}
                         className="uppercase tracking-wide font-semibold"
-                        aria-label={`Assign next patient to ${room.name}`}
+                        aria-label={
+                          canAssign
+                            ? `Assign next patient to ${room.name}`
+                            : "Room assignment requires Doctor or Admin role"
+                        }
+                        title={
+                          !canAssign
+                            ? "Requires Doctor or Admin role"
+                            : undefined
+                        }
                       >
                         Assign
                       </Button>
