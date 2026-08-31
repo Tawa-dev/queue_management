@@ -18,13 +18,13 @@ export function HeaderBar({
   userName: fallbackName = "Staff Member",
   userRole: fallbackRole = "Staff",
   userInitials: fallbackInitials = "ST",
-  isOnline = true,
   clinicName = "MABVUKU POLYCLINIC",
   subtitle = "Outpatient Queue Management",
 }: HeaderBarProps) {
   const { data: session } = useSession();
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [networkOnline, setNetworkOnline] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeName = session?.user?.name || fallbackName;
@@ -49,6 +49,19 @@ export function HeaderBar({
     return () => {
       clearTimeout(timeoutId);
       clearInterval(intervalId);
+    };
+  }, []);
+
+  // Real network status — replaces the static isOnline prop
+  useEffect(() => {
+    const up   = () => setNetworkOnline(true);
+    const down = () => setNetworkOnline(false);
+    window.addEventListener("online",  up);
+    window.addEventListener("offline", down);
+    setNetworkOnline(navigator.onLine);
+    return () => {
+      window.removeEventListener("online",  up);
+      window.removeEventListener("offline", down);
     };
   }, []);
 
@@ -124,12 +137,12 @@ export function HeaderBar({
         <div className="hidden sm:flex items-center gap-2 text-[13px] text-white">
           <span
             className={`w-2 h-2 rounded-full ${
-              isOnline ? "bg-[#22C55E]" : "bg-[#EF4444]"
+              networkOnline ? "bg-[#22C55E]" : "bg-[#EF4444]"
             }`}
             aria-hidden="true"
           />
           <span className="font-medium whitespace-nowrap">
-            {isOnline ? "System Online" : "Offline (Cached)"}
+            {networkOnline ? "System Online" : "Offline (Cached)"}
           </span>
         </div>
 

@@ -18,6 +18,7 @@ export function DisplayLayout({
   children,
 }: DisplayLayoutProps) {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     setCurrentDateTime(new Date());
@@ -25,6 +26,20 @@ export function DisplayLayout({
       setCurrentDateTime(new Date());
     }, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Track real network status for the offline banner
+  useEffect(() => {
+    const handleOnline  = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online",  handleOnline);
+    window.addEventListener("offline", handleOffline);
+    // Set initial value (navigator.onLine is synchronous)
+    setIsOnline(navigator.onLine);
+    return () => {
+      window.removeEventListener("online",  handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   const formattedDate = currentDateTime
@@ -99,9 +114,24 @@ export function DisplayLayout({
       </main>
 
       {/* 4. High-Visibility TV Footer Banner */}
-      <footer className="bg-[#0B2D6B] text-white px-8 py-4 flex items-center justify-center gap-3 text-lg lg:text-xl font-medium shadow-inner shrink-0">
-        <Users className="w-7 h-7 text-[#93C5FD]" aria-hidden="true" />
-        <span>{footerMessage}</span>
+      <footer
+        className={`px-8 py-4 flex items-center justify-center gap-3 text-lg lg:text-xl font-medium shadow-inner shrink-0 transition-colors ${
+          isOnline ? "bg-[#0B2D6B] text-white" : "bg-amber-600 text-white"
+        }`}
+        role="status"
+        aria-live="polite"
+      >
+        {isOnline ? (
+          <>
+            <Users className="w-7 h-7 text-[#93C5FD]" aria-hidden="true" />
+            <span>{footerMessage}</span>
+          </>
+        ) : (
+          <>
+            <span className="text-2xl" aria-hidden="true">⚠</span>
+            <span>Offline — showing last known queue state</span>
+          </>
+        )}
       </footer>
     </div>
   );

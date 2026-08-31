@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import "./globals.css";
@@ -12,6 +12,19 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Mabvuku Polyclinic - Outpatient Queue Management",
   description: "City of Harare Municipal Outpatient Queue Management Workstation & Live Display System",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Mabvuku Queue",
+  },
+  icons: {
+    apple: "/icons/icon-192.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B2D6B",
 };
 
 export default function RootLayout({

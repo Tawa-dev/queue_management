@@ -27,6 +27,23 @@ export default function DisplayZonePage({ params }: DisplayZonePageProps) {
     queue: [],
   });
 
+  // Seed state from localStorage cache on mount so the board renders
+  // immediately on reload even when the network is unavailable.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`display_cache_${zoneCode}`);
+      if (raw) {
+        const { data: cached } = JSON.parse(raw) as {
+          data: DisplayData;
+          cachedAt: number;
+        };
+        setData(cached);
+      }
+    } catch {
+      // Corrupt or missing cache — ignore, first poll will populate it
+    }
+  }, [zoneCode]);
+
   // Track which ticket numbers were "NOW SERVING" on the last poll so we only
   // announce each ticket once (when it first appears in an occupied room).
   const prevServingTicketsRef = useRef<Set<string>>(new Set());
@@ -65,6 +82,17 @@ export default function DisplayZonePage({ params }: DisplayZonePageProps) {
 
       prevServingTicketsRef.current = currentServingTickets;
       setData(result);
+
+      // Persist last-good data to localStorage so the board survives a
+      // full page reload while offline.
+      try {
+        localStorage.setItem(
+          `display_cache_${zoneCode}`,
+          JSON.stringify({ data: result, cachedAt: Date.now() })
+        );
+      } catch {
+        // localStorage quota exceeded — swallow silently
+      }
     } catch {
       // Swallow errors — keep last good data on screen
     }
