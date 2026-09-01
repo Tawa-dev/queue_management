@@ -30,16 +30,20 @@ export function QueueTable({
   className = "",
 }: QueueTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [now, setNow] = useState<Date>(new Date());
+  // null on the server / first render — avoids hydration mismatch caused by
+  // the server and client clocks diverging between SSR and hydration.
+  const [now, setNow] = useState<Date | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    // Set the real time client-side after hydration, then tick every 15 s
+    setNow(new Date());
     const interval = setInterval(() => setNow(new Date()), 15000);
     return () => clearInterval(interval);
   }, []);
 
-
   const calculateWaitMins = (checkInIsoString: string) => {
+    if (!now) return 0; // pre-hydration — render 0 to match server output
     const diffMs = now.getTime() - new Date(checkInIsoString).getTime();
     return Math.max(0, Math.floor(diffMs / 60000));
   };

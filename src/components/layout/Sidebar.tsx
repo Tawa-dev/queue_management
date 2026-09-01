@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Users,
   DoorOpen,
@@ -39,6 +40,12 @@ export function Sidebar({
   className = "",
 }: SidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const isAdmin = session?.user?.role === "ADMIN";
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => item.section !== "admin" || isAdmin
+  );
 
   const isItemActive = (href: string) => {
     if (href === "/queue" && (pathname === "/" || pathname === "/queue")) {
@@ -53,7 +60,7 @@ export function Sidebar({
       aria-label="Sidebar navigation"
     >
       <nav className="pt-3 px-3 flex flex-col gap-1" aria-label="Workstation">
-        {NAV_ITEMS.map((item) => {
+        {visibleItems.map((item) => {
           const active = isItemActive(item.href);
           const Icon = item.icon;
           return (

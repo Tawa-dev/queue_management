@@ -19,11 +19,11 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 6 | Patient check-in and queue core | Slice 1 | in-progress |
 | 7 | Queue view (staff workstation) | Slice 1 | in-progress |
 | 8 | Room assignment and status | Slice 1 | in-progress |
-| 9 | On-screen display board | Slice 2 | planned |
-| 10 | PWA offline cache | Slice 3 | planned |
-| 11 | Admin dashboard and reporting | Deferred | planned |
-| 12 | Patients list and history | Deferred | planned |
-| 13 | Settings | Deferred | planned |
+| 9 | On-screen display board | Slice 2 | in-progress |
+| 10 | PWA offline cache | Slice 3 | in-progress |
+| 11 | Admin dashboard and reporting | Deferred | in-progress |
+| 12 | Patients list and history | Deferred | in-progress |
+| 13 | Settings | Deferred | in-progress |
 
 ## Foundations
 
@@ -152,7 +152,8 @@ Staff explicitly press an "Assign" button per room to call the next patient to t
 
 ## Slice 2: On-screen display board
 
-### 9. On-screen display board · needs a decision
+### 9. On-screen display board · in-progress
+spec [0009](../specs/0009-pwa-offline-caching/spec.md) · code in `app/(display)/display/[zone]/page.tsx`, `src/server/actions/getDisplay.ts`, `src/components/layout/DisplayLayout.tsx`
 
 A separate, TV-sized, read-only page for each clinic zone (two zones in the demo: Block A General and Block B Maternal and Child Health). Shows who is now serving in each room within that zone and the next few patients waiting. Polling keeps it live. Voice announcement via the browser Web Speech API (`SpeechSynthesis`) reads the queue number and assigned room aloud when a patient status changes to `now serving`. Works on a standard browser with no internet connection once the page is loaded (cached queue state for the display view).
 
@@ -160,25 +161,64 @@ A separate, TV-sized, read-only page for each clinic zone (two zones in the demo
 
 **Done when:** navigating to `/display/[zone]` renders the correct zone's "now serving" and waiting list; a status change triggers a voice utterance; the page updates on each poll without a manual refresh; and the display still renders with the cached state when the network drops mid-session.
 
-- [ ] Design it (spec): `/architect on-screen display board`
+- [x] Design it (spec): `/architect on-screen display board`
+- [x] Build it: `/develop on-screen display board`
+  - [x] Create `getDisplayDataAction` in `src/server/actions/getDisplay.ts` — zone lookup, rooms + queue in one call (satisfies AC-1)
+  - [x] Build `app/(display)/display/[zone]/page.tsx` — NOW SERVING and WAITING sections, 5s poll, voice announcements via `SpeechSynthesis` (satisfies AC-2, AC-3, AC-4)
+  - [x] Add localStorage cache on mount and write on poll for offline resilience (satisfies AC-4)
+  - [x] Add offline amber banner in `DisplayLayout.tsx` (satisfies AC-4)
+- [ ] Verify it: `/check verify on-screen display board`
 
 ## Slice 3: PWA offline cache
 
-### 10. PWA offline cache · needs a decision
+### 10. PWA offline cache · in-progress
+spec [0009](../specs/0009-pwa-offline-caching/spec.md) · code in `next.config.ts`, `src/sw.ts`, `public/manifest.webmanifest`, `public/icons/`, `src/components/layout/HeaderBar.tsx`
 
-Serwist (`@serwist/next`) is installed. Configure service worker caching so the app installs as a PWA and the queue display view (Slice 2) continues rendering from cached state when the device loses connectivity. Staff-facing operational pages degrade gracefully; write operations (check-in, assignment) queue or fail clearly rather than silently.
+Serwist (`@serwist/next`) is installed and configured. Service worker precaches the app shell. Manifest and icons in place. HeaderBar and DisplayLayout show real network status.
 
 **Done when:** the app passes Lighthouse PWA checks, installs on a Chrome desktop, the `/display/[zone]` route renders from cache when the network is disabled, and a failed write shows a clear error rather than a silent failure.
 
-- [ ] Design it (spec): `/architect PWA offline cache`
+- [x] Design it (spec): `/architect PWA offline cache`
+- [x] Build it: `/develop PWA offline cache`
+  - [x] Wrap `next.config.ts` with `withSerwist` (satisfies AC-1)
+  - [x] Create `src/sw.ts` service worker source with `defaultCache` and `serwist.addEventListeners()` (satisfies AC-1)
+  - [x] Create `public/manifest.webmanifest` with icons, start_url, display standalone (satisfies AC-2)
+  - [x] Generate `public/icons/icon-192.png` and `icon-512.png` (satisfies AC-2)
+  - [x] Add manifest + appleWebApp metadata to `app/layout.tsx` (satisfies AC-2)
+  - [x] Wire real `navigator.onLine` detection in `HeaderBar.tsx` (satisfies AC-5)
+  - [x] Wire offline amber footer in `DisplayLayout.tsx` (satisfies AC-4)
+- [ ] Verify it: `/check verify PWA offline cache`
 
-## Deferred
+## Deferred (now in-progress)
 
-Out of scope for Pass 1. Kept here so the plan stays honest.
+### 11. Admin dashboard and reporting · in-progress
+code in `src/server/actions/getReports.ts`, `app/(workstation)/reports/page.tsx`
 
-- **Admin dashboard and reporting**: average wait time, patients seen today, per-hour volume. needs a decision
-- **Patients list and history**: browse all patients, view past visits. needs a decision
-- **Settings**: room management (add/edit rooms and zones), user management, clinic config. needs a decision
+Admin-only reporting page. Four metric cards (seen today, waiting now, in consultation, average wait time) plus a pure-SVG per-hour volume bar chart. Polls every 30 s. Middleware gates `/reports` to ADMIN role only.
+
+- [x] Build it: `/develop admin dashboard and reporting`
+  - [x] Create `getReportsDataAction` in `src/server/actions/getReports.ts`
+  - [x] Create `app/(workstation)/reports/page.tsx` with metric cards and hourly chart
+- [ ] Verify it: `/check verify admin dashboard and reporting`
+
+### 12. Patients list and history · in-progress
+code in `src/server/actions/getPatients.ts`, `app/(workstation)/patients/page.tsx`
+
+Read-only patient list for Admin and Receptionist roles. Searchable client-side by name. Responsive table with last visit status badge.
+
+- [x] Build it: `/develop patients list and history`
+  - [x] Create `getPatientsAction` in `src/server/actions/getPatients.ts`
+  - [x] Create `app/(workstation)/patients/page.tsx` with search and status table
+- [ ] Verify it: `/check verify patients list and history`
+
+### 13. Settings · in-progress
+code in `app/(workstation)/settings/page.tsx`
+
+Placeholder stub — renders four section cards (Room Management, Zone Management, User Management, Access & Security) with 'Coming soon' badges and an amber notice. Admin only.
+
+- [x] Build it: `/develop settings stub`
+  - [x] Create `app/(workstation)/settings/page.tsx`
+- [ ] Verify it: `/check verify settings`
 
 ## Legend
 

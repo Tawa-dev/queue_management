@@ -80,25 +80,27 @@ export async function getQueueDataAction(
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    // Fetch summary metrics for today
-    const [todayCount, waitingCount, inConsultationCount, seenCount, dnaCount] =
-      await Promise.all([
-        db.visit.count({
-          where: { zoneId, checkInTime: { gte: startOfDay } },
-        }),
-        db.visit.count({
-          where: { zoneId, status: "WAITING", checkInTime: { gte: startOfDay } },
-        }),
-        db.visit.count({
-          where: { zoneId, status: "IN_ROOM", checkInTime: { gte: startOfDay } },
-        }),
-        db.visit.count({
-          where: { zoneId, status: "COMPLETED", checkInTime: { gte: startOfDay } },
-        }),
-        db.visit.count({
-          where: { zoneId, status: "CANCELLED", checkInTime: { gte: startOfDay } },
-        }),
-      ]);
+    // Fetch summary metrics for today using a single aggregated groupBy query
+    const statusGroups = await db.visit.groupBy({
+      by: ["status"],
+      where: { zoneId, checkInTime: { gte: startOfDay } },
+      _count: { _all: true },
+    });
+
+    let todayCount = 0;
+    let waitingCount = 0;
+    let inConsultationCount = 0;
+    let seenCount = 0;
+    let dnaCount = 0;
+
+    for (const group of statusGroups) {
+      const count = group._count._all;
+      todayCount += count;
+      if (group.status === "WAITING") waitingCount = count;
+      else if (group.status === "IN_ROOM") inConsultationCount = count;
+      else if (group.status === "COMPLETED") seenCount = count;
+      else if (group.status === "CANCELLED") dnaCount = count;
+    }
 
     // Fetch active WAITING visits ordered by isUrgent desc, then checkInTime asc
     const rawVisits = await db.visit.findMany({

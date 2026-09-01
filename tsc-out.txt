@@ -1,0 +1,9 @@
+﻿node.exe : npm notice run queue_management@0.1.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\TawandaMutasa\AppData\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...ement@0.1.0 npx 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run tsc --noEmit

@@ -53,6 +53,7 @@ export function RoomAssignPanel({
   // Receptionist role cannot assign rooms — gate client-side so the UI
   // responds instantly instead of waiting for a server round-trip error.
   const canAssign = userRole !== "RECEPTIONIST";
+  const canComplete = userRole === "DOCTOR" || userRole === "ADMIN";
 
   const handleAssign = async (roomId: string) => {
     setLoadingRoomId(roomId);
@@ -201,14 +202,23 @@ export function RoomAssignPanel({
                         size="sm"
                         onClick={() => handleComplete(room.activeVisit!.id)}
                         isLoading={isCompleting}
-                        disabled={isAnyActionRunning}
+                        disabled={isAnyActionRunning || !canComplete}
                         icon={
                           !isCompleting ? (
                             <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
                           ) : undefined
                         }
                         className="text-status-seen-text border-status-seen-text/40 hover:bg-[#ECFDF5]"
-                        aria-label={`Complete consultation in ${room.name}`}
+                        aria-label={
+                          canComplete
+                            ? `Complete consultation in ${room.name}`
+                            : "Completing a visit requires Doctor or Admin role"
+                        }
+                        title={
+                          !canComplete
+                            ? "Requires Doctor or Admin role"
+                            : undefined
+                        }
                       >
                         Complete
                       </Button>

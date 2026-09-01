@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     fileParallelism: false,
+    isolate: false,
   },
   resolve: {
     alias: {

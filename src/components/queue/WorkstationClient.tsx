@@ -186,17 +186,17 @@ export function WorkstationClient({
 // Sub-component: Next Patient card
 // ---------------------------------------------------------------------------
 function NextPatientCard({ visit }: { visit: QueueVisitItem }) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(id);
   }, []);
 
-  const waitMins = Math.max(
-    0,
-    Math.floor((now.getTime() - new Date(visit.checkInTime).getTime()) / 60000)
-  );
+  const waitMins = now
+    ? Math.max(0, Math.floor((now.getTime() - new Date(visit.checkInTime).getTime()) / 60000))
+    : 0;
   const waitColor =
     waitMins >= 12
       ? "text-status-urgent-text font-bold"

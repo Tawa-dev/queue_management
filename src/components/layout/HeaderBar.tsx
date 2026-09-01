@@ -15,23 +15,23 @@ export interface HeaderBarProps {
 }
 
 export function HeaderBar({
-  userName: fallbackName = "Staff Member",
-  userRole: fallbackRole = "Staff",
-  userInitials: fallbackInitials = "ST",
   clinicName = "MABVUKU POLYCLINIC",
   subtitle = "Outpatient Queue Management",
 }: HeaderBarProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [networkOnline, setNetworkOnline] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const activeName = session?.user?.name || fallbackName;
-  const rawRole = session?.user?.role || fallbackRole;
-  const activeRole =
-    rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase();
-
+  // Only use session data once it has fully resolved — avoids the flash where
+  // the previous user's name briefly appears while the new session loads.
+  const sessionReady = status === "authenticated";
+  const activeName     = sessionReady ? (session?.user?.name ?? "") : "";
+  const rawRole        = sessionReady ? (session?.user?.role ?? "") : "";
+  const activeRole     = rawRole
+    ? rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase()
+    : "";
   const activeInitials = activeName
     ? activeName
         .split(" ")
@@ -40,7 +40,7 @@ export function HeaderBar({
         .join("")
         .toUpperCase()
         .slice(0, 2)
-    : fallbackInitials;
+    : "";
 
   useEffect(() => {
     const tick = () => setCurrentDateTime(new Date());
@@ -154,20 +154,32 @@ export function HeaderBar({
             aria-expanded={isProfileOpen}
             aria-haspopup="true"
             aria-label="User menu"
+            disabled={!sessionReady}
           >
             <div
-              className="w-9 h-9 rounded-full bg-primary-blue text-white flex items-center justify-center text-xs font-bold shrink-0"
+              className={`w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold shrink-0 ${
+                sessionReady ? "bg-primary-blue" : "bg-white/20 animate-pulse"
+              }`}
               aria-hidden="true"
             >
               {activeInitials}
             </div>
-            <div className="hidden lg:flex flex-col text-left">
-              <span className="text-[13px] font-semibold text-white leading-tight">
-                {activeName}
-              </span>
-              <span className="text-[11px] text-white/80 leading-tight">
-                {activeRole}
-              </span>
+            <div className="hidden lg:flex flex-col text-left min-w-[80px]">
+              {sessionReady ? (
+                <>
+                  <span className="text-[13px] font-semibold text-white leading-tight">
+                    {activeName}
+                  </span>
+                  <span className="text-[11px] text-white/80 leading-tight">
+                    {activeRole}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="h-3 w-20 bg-white/20 rounded animate-pulse" />
+                  <span className="h-2.5 w-14 bg-white/20 rounded animate-pulse mt-1" />
+                </>
+              )}
             </div>
             <ChevronDown className="w-4 h-4 text-white" strokeWidth={1.75} aria-hidden="true" />
           </button>

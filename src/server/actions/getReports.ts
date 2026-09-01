@@ -30,40 +30,33 @@ export async function getReportsDataAction(): Promise<ReportData> {
     const tomorrowStart = new Date(todayStart);
     tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-    // Run all queries in parallel
-    const [seenCount, waitingCount, inConsultationCount, completedVisits] =
-      await Promise.all([
-        // Patients seen (completed) today
-        db.visit.count({
-          where: {
-            status: "COMPLETED",
-            completedTime: { gte: todayStart, lt: tomorrowStart },
-          },
-        }),
+    // Fetch active status counts (WAITING and IN_ROOM) in a single groupBy query
+    const activeCounts = await db.visit.groupBy({
+      by: ["status"],
+      where: { status: { in: ["WAITING", "IN_ROOM"] } },
+      _count: { _all: true },
+    });
 
-        // Currently waiting
-        db.visit.count({
-          where: { status: "WAITING" },
-        }),
+    let waitingCount = 0;
+    let inConsultationCount = 0;
+    for (const group of activeCounts) {
+      if (group.status === "WAITING") waitingCount = group._count._all;
+      else if (group.status === "IN_ROOM") inConsultationCount = group._count._all;
+    }
 
-        // Currently in a room
-        db.visit.count({
-          where: { status: "IN_ROOM" },
-        }),
+    // Fetch completed visits today for count, avg wait, and hourly split
+    const completedVisits = await db.visit.findMany({
+      where: {
+        status: "COMPLETED",
+        completedTime: { gte: todayStart, lt: tomorrowStart },
+      },
+      select: {
+        checkInTime: true,
+        calledTime: true,
+      },
+    });
 
-        // All completed visits today with timestamps for avg wait + hourly split
-        db.visit.findMany({
-          where: {
-            status: "COMPLETED",
-            completedTime: { gte: todayStart, lt: tomorrowStart },
-            calledTime: { not: null },
-          },
-          select: {
-            checkInTime: true,
-            calledTime: true,
-          },
-        }),
-      ]);
+    const seenCount = completedVisits.length;
 
     // Average wait: checkInTime → calledTime (time spent waiting before being called)
     let avgWaitMinutes: number | null = null;
