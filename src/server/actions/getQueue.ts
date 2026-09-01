@@ -53,39 +53,51 @@ export async function getQueueDataAction(
       };
     }
 
-    // Resolve target zone ID
-    let zoneId = targetZoneId || session.user.zoneId;
+    // zoneId is always present in the JWT — resolved at login time for all roles
+    const zoneId = targetZoneId || session.user.zoneId;
     if (!zoneId) {
-      const defaultZone = await db.zone.findFirst({
-        where: { code: "A" },
-      });
-      if (!defaultZone) {
-        return {
-          success: false,
-          visits: [],
-          summary: {
-            todayCount: 0,
-            waitingCount: 0,
-            inConsultationCount: 0,
-            seenCount: 0,
-            dnaCount: 0,
-          },
-          lastUpdated: new Date().toLocaleTimeString("en-GB"),
-          error: "No active clinic zone found.",
-        };
-      }
-      zoneId = defaultZone.id;
+      return {
+        success: false,
+        visits: [],
+        summary: {
+          todayCount: 0,
+          waitingCount: 0,
+          inConsultationCount: 0,
+          seenCount: 0,
+          dnaCount: 0,
+        },
+        lastUpdated: new Date().toLocaleTimeString("en-GB"),
+        error: "No active clinic zone found. Please sign out and sign in again.",
+      };
     }
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    // Fetch summary metrics for today using a single aggregated groupBy query
-    const statusGroups = await db.visit.groupBy({
-      by: ["status"],
-      where: { zoneId, checkInTime: { gte: startOfDay } },
-      _count: { _all: true },
-    });
+    // groupBy (summary) and findMany (visit rows) are independent — run in parallel
+    const [statusGroups, rawVisits] = await Promise.all([
+      db.visit.groupBy({
+        by: ["status"],
+        where: { zoneId, checkInTime: { gte: startOfDay } },
+        _count: { _all: true },
+      }),
+      db.visit.findMany({
+        where: { zoneId, status: "WAITING" },
+        orderBy: [{ isUrgent: "desc" }, { checkInTime: "asc" }],
+        select: {
+          id: true,
+          ticketNumber: true,
+          reason: true,
+          isUrgent: true,
+          status: true,
+          checkInTime: true,
+          zoneId: true,
+          roomId: true,
+          patient: { select: { fullName: true } },
+          room:    { select: { name: true } },
+        },
+      }),
+    ]);
 
     let todayCount = 0;
     let waitingCount = 0;
@@ -101,19 +113,6 @@ export async function getQueueDataAction(
       else if (group.status === "COMPLETED") seenCount = count;
       else if (group.status === "CANCELLED") dnaCount = count;
     }
-
-    // Fetch active WAITING visits ordered by isUrgent desc, then checkInTime asc
-    const rawVisits = await db.visit.findMany({
-      where: {
-        zoneId,
-        status: "WAITING",
-      },
-      include: {
-        patient: true,
-        room: true,
-      },
-      orderBy: [{ isUrgent: "desc" }, { checkInTime: "asc" }],
-    });
 
     const visits: QueueVisitItem[] = rawVisits.map((v) => ({
       id: v.id,

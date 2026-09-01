@@ -14,15 +14,10 @@ import { CheckInStrip } from "@/components/queue/CheckInStrip";
 import { QueueTable } from "@/components/queue/QueueTable";
 import { RoomAssignPanel } from "@/components/queue/RoomAssignPanel";
 import {
-  getQueueDataAction,
-  QueueVisitItem,
-  QueueSummaryMetrics,
-} from "@/server/actions/getQueue";
-import {
-  getRoomsAction,
-  RoomItem,
-  RecentAssignment,
-} from "@/server/actions/getRooms";
+  getWorkstationDataAction,
+} from "@/server/actions/getWorkstationData";
+import type { QueueVisitItem, QueueSummaryMetrics } from "@/server/actions/getQueue";
+import type { RoomItem, RecentAssignment } from "@/server/actions/getRooms";
 
 export interface WorkstationClientProps {
   /** Initial data fetched server-side so the page renders with real data immediately */
@@ -56,20 +51,13 @@ export function WorkstationClient({
 
   const fetchAll = useCallback(async () => {
     try {
-      const [queueRes, roomsRes] = await Promise.all([
-        getQueueDataAction(),
-        getRoomsAction(),
-      ]);
-
-      if (queueRes.success) {
-        setVisits(queueRes.visits);
-        setSummary(queueRes.summary);
-        setLastUpdated(queueRes.lastUpdated);
-      }
-
-      if (roomsRes.success) {
-        setRooms(roomsRes.rooms);
-        setRecentAssignments(roomsRes.recentAssignments);
+      const res = await getWorkstationDataAction();
+      if (res.success) {
+        setVisits(res.visits);
+        setSummary(res.summary);
+        setLastUpdated(res.lastUpdated);
+        setRooms(res.rooms);
+        setRecentAssignments(res.recentAssignments);
       }
     } catch (err) {
       console.error("Failed to fetch workstation data:", err);

@@ -50,21 +50,13 @@ export async function checkInPatientAction(
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    // Resolve zone ID outside the transaction to avoid a nested async round-trip.
-    // Most staff have zoneId in their JWT; only zone-less admins hit the DB here.
+    // zoneId is always present in the JWT — resolved at login time for all roles
     let zoneId = session.user.zoneId;
     if (!zoneId) {
-      const defaultZone = await db.zone.findFirst({
-        where: { code: "A" },
-        select: { id: true },          // only fetch the id column
-      });
-      if (!defaultZone) {
-        return {
-          success: false,
-          error: "No active clinic zone found. Please contact administration.",
-        };
-      }
-      zoneId = defaultZone.id;
+      return {
+        success: false,
+        error: "No active clinic zone found. Please sign out and sign in again.",
+      };
     }
 
     // Duplicate check: join-free — query visits directly on patientName via patient relation.

@@ -47,34 +47,61 @@ export async function getRoomsAction(
       };
     }
 
-    // Resolve zone — prefer explicit arg, then session user zone, then default Block A
-    let zoneId = targetZoneId || session.user.zoneId;
+    // zoneId is always present in the JWT — resolved at login time for all roles
+    const zoneId = targetZoneId || session.user.zoneId;
     if (!zoneId) {
-      const defaultZone = await db.zone.findFirst({ where: { code: "A" } });
-      if (!defaultZone) {
-        return {
-          success: false,
-          rooms: [],
-          recentAssignments: [],
-          error: "No active clinic zone found.",
-        };
-      }
-      zoneId = defaultZone.id;
+      return {
+        success: false,
+        rooms: [],
+        recentAssignments: [],
+        error: "No active clinic zone found. Please sign out and sign in again.",
+      };
     }
 
-    // Fetch all rooms for zone, including any active IN_ROOM visit
-    const rawRooms = await db.room.findMany({
-      where: { zoneId },
-      orderBy: [{ roomNumber: "asc" }],
-      include: {
-        visits: {
-          where: { status: "IN_ROOM" },
-          orderBy: { calledTime: "desc" },
-          take: 1,
-          include: { patient: true },
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Rooms and recent assignments are independent — run in parallel
+    const [rawRooms, recentRaw] = await Promise.all([
+      db.room.findMany({
+        where: { zoneId },
+        orderBy: [{ roomNumber: "asc" }],
+        select: {
+          id: true,
+          name: true,
+          roomNumber: true,
+          status: true,
+          visits: {
+            where: { status: "IN_ROOM" },
+            orderBy: { calledTime: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              ticketNumber: true,
+              reason: true,
+              calledTime: true,
+              patient: { select: { fullName: true } },
+            },
+          },
         },
-      },
-    });
+      }),
+      db.visit.findMany({
+        where: {
+          zoneId,
+          status: { in: ["IN_ROOM", "COMPLETED"] },
+          calledTime: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+          roomId: { not: null },
+        },
+        orderBy: { calledTime: "desc" },
+        take: 5,
+        select: {
+          ticketNumber: true,
+          calledTime: true,
+          patient: { select: { fullName: true } },
+          room:    { select: { name: true } },
+        },
+      }),
+    ]);
 
     const rooms: RoomItem[] = rawRooms.map((room) => {
       const activeVisitRaw = room.visits[0] ?? null;
@@ -93,25 +120,6 @@ export async function getRoomsAction(
             }
           : undefined,
       };
-    });
-
-    // Fetch recent assignments (last 5 visits that moved to IN_ROOM or COMPLETED today)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const recentRaw = await db.visit.findMany({
-      where: {
-        zoneId,
-        status: { in: ["IN_ROOM", "COMPLETED"] },
-        calledTime: { gte: startOfDay },
-        roomId: { not: null },
-      },
-      orderBy: { calledTime: "desc" },
-      take: 5,
-      include: {
-        patient: true,
-        room: true,
-      },
     });
 
     const recentAssignments: RecentAssignment[] = recentRaw.map((v) => ({

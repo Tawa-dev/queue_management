@@ -41,6 +41,7 @@ export async function getDisplayDataAction(
 
     const zone = await db.zone.findUnique({
       where: { code: normalizedCode },
+      select: { id: true, name: true },
     });
 
     if (!zone) {
@@ -53,19 +54,39 @@ export async function getDisplayDataAction(
       };
     }
 
-    // Rooms ordered by roomNumber, include active IN_ROOM visit
-    const rawRooms = await db.room.findMany({
-      where: { zoneId: zone.id },
-      orderBy: { roomNumber: "asc" },
-      include: {
-        visits: {
-          where: { status: "IN_ROOM" },
-          orderBy: { calledTime: "desc" },
-          take: 1,
-          include: { patient: true },
+    // Rooms and queue are independent once we have the zone ID — run in parallel
+    const [rawRooms, rawQueue] = await Promise.all([
+      db.room.findMany({
+        where: { zoneId: zone.id },
+        orderBy: { roomNumber: "asc" },
+        select: {
+          id: true,
+          name: true,
+          roomNumber: true,
+          status: true,
+          visits: {
+            where: { status: "IN_ROOM" },
+            orderBy: { calledTime: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              ticketNumber: true,
+              patient: { select: { fullName: true } },
+            },
+          },
         },
-      },
-    });
+      }),
+      db.visit.findMany({
+        where: { zoneId: zone.id, status: "WAITING" },
+        orderBy: [{ isUrgent: "desc" }, { checkInTime: "asc" }],
+        take: 10,
+        select: {
+          ticketNumber: true,
+          isUrgent: true,
+          patient: { select: { fullName: true } },
+        },
+      }),
+    ]);
 
     const rooms: DisplayRoomItem[] = rawRooms.map((room) => {
       const activeVisitRaw = room.visits[0] ?? null;
@@ -82,14 +103,6 @@ export async function getDisplayDataAction(
             }
           : undefined,
       };
-    });
-
-    // Waiting queue: up to 10, urgent first then oldest
-    const rawQueue = await db.visit.findMany({
-      where: { zoneId: zone.id, status: "WAITING" },
-      orderBy: [{ isUrgent: "desc" }, { checkInTime: "asc" }],
-      take: 10,
-      include: { patient: true },
     });
 
     const queue: DisplayQueueItem[] = rawQueue.map((v, idx) => ({

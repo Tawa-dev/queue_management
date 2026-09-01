@@ -38,43 +38,65 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
   const handleCheckIn = async (bypassDuplicateWarning = false) => {
     if (!validateForm()) return;
 
+    // Capture form values before clearing
+    const submittedName = fullName.trim();
+    const submittedReason = reason.trim();
+    const submittedUrgent = isUrgent;
+
+    // Optimistic: clear the form and show a pending state immediately —
+    // the receptionist can start entering the next patient while the DB confirms.
     setIsLoading(true);
-    setAlertState(null);
+    setAlertState({
+      type: "success",
+      message: `Checking in ${submittedName}…`,
+    });
+    setFullName("");
+    setReason("");
+    setIsUrgent(false);
+    setFieldErrors({});
 
     try {
       const res = await checkInPatientAction({
-        fullName: fullName.trim(),
-        reason: reason.trim(),
-        isUrgent,
+        fullName: submittedName,
+        reason: submittedReason,
+        isUrgent: submittedUrgent,
         bypassDuplicateWarning,
       });
 
       if (res.success) {
+        // Replace the pending message with the real ticket number
         setAlertState({
           type: "success",
           message: `Patient checked in successfully. Ticket #${res.ticketNumber} issued.`,
         });
-        setFullName("");
-        setReason("");
-        setIsUrgent(false);
-        setFieldErrors({});
-
         if (onCheckInSuccess) {
           onCheckInSuccess(res);
         }
       } else if (res.requiresConfirmation && res.warning) {
+        // Duplicate warning — restore form so the receptionist can decide
+        setFullName(submittedName);
+        setReason(submittedReason);
+        setIsUrgent(submittedUrgent);
         setAlertState({
           type: "warning",
           message: res.warning,
           requiresConfirmation: true,
         });
       } else {
+        // Server rejected — restore form so the receptionist can retry
+        setFullName(submittedName);
+        setReason(submittedReason);
+        setIsUrgent(submittedUrgent);
         setAlertState({
           type: "error",
           message: res.error || "Failed to check in patient. Try again.",
         });
       }
     } catch {
+      // Network error — restore form
+      setFullName(submittedName);
+      setReason(submittedReason);
+      setIsUrgent(submittedUrgent);
       setAlertState({
         type: "error",
         message: "Network or server connection error. Please try again.",
@@ -137,7 +159,6 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
               }}
               error={fieldErrors.fullName}
               isRequired
-              disabled={isLoading}
             />
           </div>
 
@@ -153,7 +174,6 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
               }}
               error={fieldErrors.reason}
               isRequired
-              disabled={isLoading}
             />
           </div>
 
@@ -165,7 +185,6 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
                 type="checkbox"
                 checked={isUrgent}
                 onChange={(e) => setIsUrgent(e.target.checked)}
-                disabled={isLoading}
                 className="w-4 h-4 text-primary-navy border-neutral-slate-300 rounded focus:ring-primary-blue cursor-pointer"
               />
               <span>Urgent / Priority</span>

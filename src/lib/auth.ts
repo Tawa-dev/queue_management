@@ -54,12 +54,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        // Resolve zoneId at login time so it's baked into the JWT.
+        // Staff with an assigned zone use it directly. Zone-less users
+        // (admins) get Zone A's ID resolved once here — never again per
+        // session — eliminating the zone fallback DB query on every poll.
+        let zoneId = user.zoneId;
+        if (!zoneId) {
+          const defaultZone = await db.zone.findFirst({
+            where: { code: "A" },
+            select: { id: true },
+          });
+          zoneId = defaultZone?.id ?? null;
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          zoneId: user.zoneId,
+          zoneId,
         };
       },
     }),

@@ -32,51 +32,49 @@ export async function completeVisitAction(
       return { success: false, error: "Visit ID is required." };
     }
 
-    const result = await db.$transaction(async (tx) => {
-      // Fetch the visit with its room
-      const visit = await tx.visit.findUnique({
-        where: { id: visitId },
-        include: { room: true },
-      });
-
-      if (!visit) {
-        throw new Error("Visit not found.");
-      }
-      if (visit.status !== "IN_ROOM") {
-        throw new Error("Visit is not currently in room and cannot be completed.");
-      }
-      if (!visit.roomId) {
-        throw new Error("Visit has no assigned room.");
-      }
-
-      const now = new Date();
-
-      // Atomically mark visit completed and free the room
-      const [updatedVisit] = await Promise.all([
-        tx.visit.update({
-          where: { id: visit.id },
-          data: {
-            status: "COMPLETED",
-            completedTime: now,
-          },
-        }),
-        tx.room.update({
-          where: { id: visit.roomId },
-          data: { status: "FREE" },
-        }),
-      ]);
-
-      return {
-        visitId: updatedVisit.id,
-        roomName: visit.room?.name ?? "Unknown Room",
-      };
+    // Read visit outside the transaction — only the writes need to be atomic
+    const visit = await db.visit.findUnique({
+      where: { id: visitId },
+      select: {
+        id: true,
+        status: true,
+        roomId: true,
+        room: { select: { name: true } },
+      },
     });
 
-    revalidatePath("/");
+    if (!visit) {
+      return { success: false, error: "Visit not found." };
+    }
+    if (visit.status !== "IN_ROOM") {
+      return { success: false, error: "Visit is not currently in room and cannot be completed." };
+    }
+    if (!visit.roomId) {
+      return { success: false, error: "Visit has no assigned room." };
+    }
+
+    const now = new Date();
+
+    // Batch transaction — 2 writes, single network round-trip, no timeout risk
+    await db.$transaction([
+      db.visit.update({
+        where: { id: visit.id },
+        data: { status: "COMPLETED", completedTime: now },
+      }),
+      db.room.update({
+        where: { id: visit.roomId },
+        data: { status: "FREE" },
+      }),
+    ]);
+
     revalidatePath("/queue");
     revalidatePath("/rooms");
 
-    return { success: true, ...result };
+    return {
+      success: true,
+      visitId: visit.id,
+      roomName: visit.room?.name ?? "Unknown Room",
+    };
   } catch (err: any) {
     console.error("Error in completeVisitAction:", err);
     return {
