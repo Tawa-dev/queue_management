@@ -4,3 +4,4 @@ export * from "./Select";
 export * from "./Badge";
 export * from "./AlertBanner";
 export * from "./MetricCard";
+export * from "./LiveClock";

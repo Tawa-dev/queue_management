@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { Calendar, Clock, ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { LiveClock } from "@/components/ui/LiveClock";
 
 export interface HeaderBarProps {
   userName?: string;
@@ -19,7 +20,6 @@ export function HeaderBar({
   subtitle = "Outpatient Queue Management",
 }: HeaderBarProps) {
   const { data: session, status } = useSession();
-  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [networkOnline, setNetworkOnline] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,17 +42,6 @@ export function HeaderBar({
         .slice(0, 2)
     : "";
 
-  useEffect(() => {
-    const tick = () => setCurrentDateTime(new Date());
-    const timeoutId = setTimeout(tick, 0);
-    const intervalId = setInterval(tick, 1000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []);
-
-  // Real network status — replaces the static isOnline prop
   useEffect(() => {
     const up   = () => setNetworkOnline(true);
     const down = () => setNetworkOnline(false);
@@ -77,23 +66,6 @@ export function HeaderBar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const formattedDate = currentDateTime
-    ? currentDateTime.toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "Loading...";
-
-  const formattedTime = currentDateTime
-    ? currentDateTime.toLocaleTimeString("en-GB", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "10:00 AM";
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/login" });
@@ -122,16 +94,7 @@ export function HeaderBar({
         </div>
       </div>
 
-      <div className="hidden md:flex items-center justify-center gap-8 px-4">
-        <div className="flex items-center gap-2 text-[13px] text-white">
-          <Calendar className="w-4 h-4 text-white" strokeWidth={1.75} aria-hidden="true" />
-          <span className="font-medium whitespace-nowrap">{formattedDate}</span>
-        </div>
-        <div className="flex items-center gap-2 text-[13px] text-white">
-          <Clock className="w-4 h-4 text-white" strokeWidth={1.75} aria-hidden="true" />
-          <span className="font-medium tracking-wide whitespace-nowrap">{formattedTime}</span>
-        </div>
-      </div>
+      <LiveClock variant="header" />
 
       <div className="flex items-center justify-end gap-4 sm:gap-5">
         <div className="hidden sm:flex items-center gap-2 text-[13px] text-white">

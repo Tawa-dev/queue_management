@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Clock, Calendar, Users } from "lucide-react";
+import { Users } from "lucide-react";
+import { LiveClock } from "@/components/ui/LiveClock";
 
 export interface DisplayLayoutProps {
   zoneName?: string;
@@ -17,16 +18,7 @@ export function DisplayLayout({
   footerMessage = "Thank you for your patience. We will attend to you shortly.",
   children,
 }: DisplayLayoutProps) {
-  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [isOnline, setIsOnline] = useState(true);
-
-  useEffect(() => {
-    setCurrentDateTime(new Date());
-    const interval = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Track real network status for the offline banner
   useEffect(() => {
@@ -41,23 +33,6 @@ export function DisplayLayout({
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
-
-  const formattedDate = currentDateTime
-    ? currentDateTime.toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "Friday, 22 Aug 2026";
-
-  const formattedTime = currentDateTime
-    ? currentDateTime.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "10:24 AM";
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#0F172A] select-none font-sans overflow-hidden">
@@ -85,17 +60,7 @@ export function DisplayLayout({
         </div>
 
         {/* Live Clock & Date */}
-        <div className="flex items-center gap-6 text-lg lg:text-xl font-semibold">
-          <div className="flex items-center gap-2 text-white">
-            <Clock className="w-6 h-6 text-[#93C5FD]" aria-hidden="true" />
-            <span>{formattedTime}</span>
-          </div>
-          <div className="h-6 w-px bg-[#1E4DB7]" aria-hidden="true" />
-          <div className="flex items-center gap-2 text-[#CBD5E1]">
-            <Calendar className="w-6 h-6 text-[#93C5FD]" aria-hidden="true" />
-            <span>{formattedDate}</span>
-          </div>
-        </div>
+          <LiveClock variant="display" />
       </header>
 
       {/* 2. Zone Title Banner */}
