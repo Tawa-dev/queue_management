@@ -2,6 +2,8 @@
 // real metrics immediately (no skeleton flash on navigation).
 // ReportsClient handles 30-second polling after hydration.
 
+export const dynamic = "force-dynamic";
+
 import { getReportsDataAction } from "@/server/actions/getReports";
 import { ReportsClient } from "@/components/reports/ReportsClient";
 

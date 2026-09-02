@@ -2,6 +2,8 @@
 // content immediately (no skeleton flash on navigation).
 // Client-side polling in RoomsClient takes over after hydration.
 
+export const dynamic = "force-dynamic";
+
 import { getRoomsAction } from "@/server/actions/getRooms";
 import { RoomsClient } from "@/components/rooms/RoomsClient";
 

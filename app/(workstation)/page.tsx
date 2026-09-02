@@ -2,6 +2,10 @@
 // with real content immediately (no skeleton flash on first visit).
 // Client-side polling in WorkstationClient takes over after hydration.
 
+// Force dynamic rendering — this page calls auth() which reads request
+// headers and cannot be statically pre-rendered at build time.
+export const dynamic = "force-dynamic";
+
 import { getWorkstationDataAction } from "@/server/actions/getWorkstationData";
 import { WorkstationClient } from "@/components/queue/WorkstationClient";
 
