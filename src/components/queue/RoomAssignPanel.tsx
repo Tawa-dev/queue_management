@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Clock, Lock, RefreshCw } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Lock, RefreshCw } from "lucide-react";
 import { Button, Badge, AlertBanner } from "@/components/ui";
 import { RoomItem, RecentAssignment } from "@/server/actions/getRooms";
 import { assignRoomAction } from "@/server/actions/assignRoom";
+import { completeVisitAction } from "@/server/actions/completeVisit";
 
 export interface RoomAssignPanelProps {
   rooms: RoomItem[];
@@ -47,6 +48,7 @@ export function RoomAssignPanel({
   className = "",
 }: RoomAssignPanelProps) {
   const [loadingRoomId, setLoadingRoomId] = useState<string | null>(null);
+  const [loadingVisitId, setLoadingVisitId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -76,6 +78,27 @@ export function RoomAssignPanel({
     }
   };
 
+  const handleComplete = async (visitId: string, roomName: string) => {
+    setLoadingVisitId(visitId);
+    setAlert(null);
+    try {
+      const res = await completeVisitAction(visitId);
+      if (res.success) {
+        setAlert({
+          type: "success",
+          message: `Consultation in ${roomName} marked complete. Room is now free.`,
+        });
+        onActionSuccess();
+      } else {
+        setAlert({ type: "error", message: res.error ?? "Could not complete visit." });
+      }
+    } catch {
+      setAlert({ type: "error", message: "Network error. Please try again." });
+    } finally {
+      setLoadingVisitId(null);
+    }
+  };
+
   const handleRefresh = async () => {
     if (!onRefresh) return;
     setIsRefreshing(true);
@@ -86,7 +109,7 @@ export function RoomAssignPanel({
     }
   };
 
-  const isAnyActionRunning = loadingRoomId !== null || isRefreshing;
+  const isAnyActionRunning = loadingRoomId !== null || loadingVisitId !== null || isRefreshing;
 
   return (
     <div
@@ -181,6 +204,25 @@ export function RoomAssignPanel({
                         }
                       >
                         Assign
+                      </Button>
+                    ) : room.activeVisit && canAssign ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          handleComplete(room.activeVisit!.id, room.name)
+                        }
+                        isLoading={loadingVisitId === room.activeVisit.id}
+                        disabled={isAnyActionRunning}
+                        icon={
+                          loadingVisitId !== room.activeVisit.id ? (
+                            <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
+                          ) : undefined
+                        }
+                        className="text-status-seen-text border-status-seen-text/40 hover:bg-[#ECFDF5] min-w-[72px]"
+                        aria-label={`Complete consultation in ${room.name}`}
+                      >
+                        Complete
                       </Button>
                     ) : (
                       <span
