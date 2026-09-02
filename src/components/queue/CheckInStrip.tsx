@@ -144,65 +144,55 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
         </div>
       )}
 
-      {/* Form matching reference design */}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-          {/* Patient Name */}
-          <div className="md:col-span-5">
-            <Input
-              label="Patient Name"
-              placeholder="Enter full name"
-              value={fullName}
-              onChange={(e) => {
-                setFullName(e.target.value);
-                if (fieldErrors.fullName) setFieldErrors({ ...fieldErrors, fullName: undefined });
-              }}
-              error={fieldErrors.fullName}
-              isRequired
-            />
-          </div>
+      {/* Form: 3-column row — name | reason | priority + full-width button */}
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(200px,0.9fr)] gap-4 items-start">
+          <Input
+            label="Patient Name"
+            placeholder="Enter full name"
+            value={fullName}
+            onChange={(e) => {
+              setFullName(e.target.value);
+              if (fieldErrors.fullName) setFieldErrors({ ...fieldErrors, fullName: undefined });
+            }}
+            error={fieldErrors.fullName}
+            isRequired
+          />
 
-          {/* Reason for Visit */}
-          <div className="md:col-span-5">
-            <Input
-              label="Reason for Visit"
-              placeholder="Briefly describe reason for visit"
-              value={reason}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (fieldErrors.reason) setFieldErrors({ ...fieldErrors, reason: undefined });
-              }}
-              error={fieldErrors.reason}
-              isRequired
-            />
-          </div>
+          <Input
+            label="Reason for Visit"
+            placeholder="Briefly describe reason for visit"
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value);
+              if (fieldErrors.reason) setFieldErrors({ ...fieldErrors, reason: undefined });
+            }}
+            error={fieldErrors.reason}
+            isRequired
+          />
 
-          {/* Priority */}
-          <div className="md:col-span-2 flex flex-col gap-1.5 text-left">
+          <div className="flex flex-col gap-1.5 min-w-0">
             <span className="text-xs font-semibold text-neutral-slate-700">Priority</span>
             <label className="flex items-center gap-2.5 h-10 cursor-pointer select-none text-xs font-medium text-neutral-slate-700">
               <input
                 type="checkbox"
                 checked={isUrgent}
                 onChange={(e) => setIsUrgent(e.target.checked)}
-                className="w-4 h-4 text-primary-navy border-neutral-slate-300 rounded focus:ring-primary-blue cursor-pointer"
+                className="w-4 h-4 shrink-0 text-primary-navy border-neutral-slate-300 rounded focus:ring-primary-blue cursor-pointer"
               />
-              <span>Urgent / Priority</span>
+              <span className="truncate">Urgent / Priority</span>
             </label>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isLoading}
+              fullWidth
+              icon={<UserPlus className="w-4 h-4" />}
+              className="mt-1 py-2.5 text-xs font-bold uppercase tracking-wider"
+            >
+              CHECK IN PATIENT
+            </Button>
           </div>
-        </div>
-
-        {/* Submit Button Row - Right Aligned */}
-        <div className="flex justify-end pt-1">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isLoading}
-            icon={<UserPlus className="w-4 h-4" />}
-            className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider"
-          >
-            CHECK IN PATIENT
-          </Button>
         </div>
       </form>
     </div>

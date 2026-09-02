@@ -119,20 +119,22 @@ export function WorkstationClient({
   const nextPatient = visits.length > 0 ? visits[0] : null;
 
   return (
-    <div className="space-y-3 pb-4">
+    <div className="pb-4">
       <h1 className="sr-only">Outpatient Queue Workstation — Mabvuku Polyclinic</h1>
 
-      <section aria-labelledby="metrics-heading">
-        <h2 id="metrics-heading" className="sr-only">
-          Queue Summary Metrics
-        </h2>
-        <MetricBar metrics={summaryMetrics} />
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] gap-4">
-        {/* Left column: check-in strip + queue table */}
+      {/* Two-column layout: left main (stats + check-in + queue) | right rail (next patient + rooms) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
+        {/* Left column */}
         <div className="space-y-3 min-w-0">
+          <section aria-labelledby="metrics-heading">
+            <h2 id="metrics-heading" className="sr-only">
+              Queue Summary Metrics
+            </h2>
+            <MetricBar metrics={summaryMetrics} />
+          </section>
+
           <CheckInStrip onCheckInSuccess={fetchAll} />
+
           <QueueTable
             visits={visits}
             lastUpdated={lastUpdated}
@@ -141,10 +143,9 @@ export function WorkstationClient({
           />
         </div>
 
-        {/* Right column: next patient banner + room assign panel */}
-        <div className="space-y-3">
-          {/* Next Patient banner */}
-          <div className="bg-next-patient rounded-lg border border-[#F3E4C8] p-4">
+        {/* Right column — starts at top, aligned with stats row */}
+        <div className="space-y-3 min-w-0">
+          <div className="bg-next-patient rounded-lg border border-[#F3E4C8] p-4 shadow-clinic-sm">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-status-waiting-text">
               Next Patient
             </p>
@@ -157,11 +158,11 @@ export function WorkstationClient({
             )}
           </div>
 
-          {/* Live room assignment panel */}
           <RoomAssignPanel
             rooms={rooms}
             recentAssignments={recentAssignments}
             onActionSuccess={fetchAll}
+            onRefresh={fetchAll}
             userRole={userRole}
           />
         </div>
@@ -186,9 +187,11 @@ function NextPatientCard({ visit }: { visit: QueueVisitItem }) {
     ? Math.max(0, Math.floor((now.getTime() - new Date(visit.checkInTime).getTime()) / 60000))
     : 0;
   const waitColor =
-    waitMins >= 12
+    waitMins >= 15
       ? "text-status-urgent-text font-bold"
-      : "text-status-waiting-text font-bold";
+      : waitMins >= 10
+      ? "text-status-waiting-text font-bold"
+      : "text-neutral-slate-700 font-semibold";
 
   return (
     <div className="mt-2">

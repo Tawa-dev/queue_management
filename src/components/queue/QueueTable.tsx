@@ -16,11 +16,9 @@ export interface QueueTableProps {
 }
 
 function waitTimeClass(mins: number) {
-  if (mins >= 12) return "text-status-urgent-text font-bold";
-  if (mins >= 10) return "text-[#EA580C] font-bold";
-  if (mins >= 8) return "text-status-waiting-text font-bold";
-  if (mins >= 5) return "text-[#F59E0B] font-bold";
-  return "text-status-seen-text font-bold";
+  if (mins >= 15) return "text-status-urgent-text font-bold";
+  if (mins >= 10) return "text-status-waiting-text font-bold";
+  return "text-neutral-slate-700 font-semibold";
 }
 
 export function QueueTable({
@@ -153,10 +151,10 @@ export function QueueTable({
                     key={visit.id}
                     className={`${
                       visit.isUrgent
-                        ? "bg-status-urgent-bg/70"
+                        ? "bg-status-urgent-bg/70 border-l-4 border-l-status-urgent-text"
                         : isFirstRow
-                        ? "bg-[#FEF5E5]"
-                        : "bg-white"
+                        ? "bg-[#FEF5E5] border-l-4 border-l-status-waiting-text"
+                        : "bg-white border-l-4 border-l-transparent"
                     }`}
                   >
                     <td className="px-4 py-3 font-extrabold text-[15px]">
@@ -191,11 +189,7 @@ export function QueueTable({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={waitMins >= 10 ? "waiting" : "seen"}
-                        size="sm"
-                        showDefaultIcon={false}
-                      >
+                      <Badge variant="waiting" size="sm" showDefaultIcon={false}>
                         WAITING
                       </Badge>
                     </td>

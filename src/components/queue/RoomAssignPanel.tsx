@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowRight, CheckCircle2, Clock, Lock } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Clock, Lock, RefreshCw } from "lucide-react";
 import { Button, Badge, AlertBanner } from "@/components/ui";
 import { RoomItem, RecentAssignment } from "@/server/actions/getRooms";
 import { assignRoomAction } from "@/server/actions/assignRoom";
-import { completeVisitAction } from "@/server/actions/completeVisit";
 
 export interface RoomAssignPanelProps {
   rooms: RoomItem[];
   recentAssignments: RecentAssignment[];
   /** Called after a successful assign or complete so the parent can re-fetch */
   onActionSuccess: () => void;
+  /** Manual refresh for the "Update Room Status" control */
+  onRefresh?: () => void;
   /**
    * The current user's role from the session.
    * Receptionists cannot assign rooms — the button is disabled client-side
@@ -40,20 +42,18 @@ export function RoomAssignPanel({
   rooms,
   recentAssignments,
   onActionSuccess,
+  onRefresh,
   userRole,
   className = "",
 }: RoomAssignPanelProps) {
   const [loadingRoomId, setLoadingRoomId] = useState<string | null>(null);
-  const [loadingVisitId, setLoadingVisitId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
-  // Receptionist role cannot assign rooms — gate client-side so the UI
-  // responds instantly instead of waiting for a server round-trip error.
   const canAssign = userRole !== "RECEPTIONIST";
-  const canComplete = userRole === "DOCTOR" || userRole === "ADMIN";
 
   const handleAssign = async (roomId: string) => {
     setLoadingRoomId(roomId);
@@ -76,39 +76,29 @@ export function RoomAssignPanel({
     }
   };
 
-  const handleComplete = async (visitId: string) => {
-    setLoadingVisitId(visitId);
-    setAlert(null);
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    setIsRefreshing(true);
     try {
-      const res = await completeVisitAction(visitId);
-      if (res.success) {
-        setAlert({
-          type: "success",
-          message: `Consultation in ${res.roomName} marked complete. Room is now free.`,
-        });
-        onActionSuccess();
-      } else {
-        setAlert({ type: "error", message: res.error ?? "Could not complete visit." });
-      }
-    } catch {
-      setAlert({ type: "error", message: "Network error. Please try again." });
+      await onRefresh();
     } finally {
-      setLoadingVisitId(null);
+      setIsRefreshing(false);
     }
   };
 
-  const isAnyActionRunning = loadingRoomId !== null || loadingVisitId !== null;
+  const isAnyActionRunning = loadingRoomId !== null || isRefreshing;
 
   return (
     <div
       className={`bg-white rounded-lg border border-neutral-slate-200 shadow-clinic-sm overflow-hidden ${className}`}
     >
-      <div className="p-4 space-y-3">
+      <div className="bg-primary-tint px-4 py-3 border-b border-[#C7D9F5]/60">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary-navy">
           Assign to Available Room
         </h3>
+      </div>
 
-        {/* Role notice — shown immediately from session, no server call needed */}
+      <div className="p-4 space-y-3">
         {!canAssign && (
           <div className="flex items-center gap-1.5 rounded-md bg-[#FFF7ED] border border-[#FDBA74]/50 px-2.5 py-1.5 text-[11px] text-[#92400E]">
             <Lock className="w-3 h-3 shrink-0" aria-hidden="true" />
@@ -133,18 +123,14 @@ export function RoomAssignPanel({
             {rooms.map((room) => {
               const isFree = room.status === "FREE";
               const isAssigning = loadingRoomId === room.id;
-              const isCompleting =
-                !isFree &&
-                room.activeVisit != null &&
-                loadingVisitId === room.activeVisit.id;
 
               return (
                 <div
                   key={room.id}
-                  className={`px-3 py-2.5 rounded-md border bg-white flex items-center justify-between gap-2 ${
+                  className={`px-3 py-2.5 rounded-md border flex items-center justify-between gap-2 ${
                     isFree
-                      ? "border-neutral-slate-200"
-                      : "border-status-in-consultation-border bg-[#F8FAFF]"
+                      ? "border-neutral-slate-200 bg-white"
+                      : "border-[#93C5FD]/40 bg-[#F8FAFF]"
                   }`}
                 >
                   <div className="min-w-0">
@@ -157,12 +143,12 @@ export function RoomAssignPanel({
                           #{room.activeVisit.ticketNumber}
                         </span>{" "}
                         {room.activeVisit.patientName} ·{" "}
-                        <span className="text-status-in-consultation-text">
+                        <span className="text-status-consult-text">
                           {elapsedMins(room.activeVisit.calledTime)} min in
                         </span>
                       </p>
                     ) : (
-                      <p className="text-[11px] text-neutral-slate-400">
+                      <p className="text-[11px] text-neutral-slate-500">
                         Room {room.roomNumber}
                       </p>
                     )}
@@ -177,12 +163,12 @@ export function RoomAssignPanel({
 
                     {isFree ? (
                       <Button
-                        variant="primary"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleAssign(room.id)}
                         isLoading={isAssigning}
                         disabled={isAnyActionRunning || !canAssign}
-                        className="uppercase tracking-wide font-semibold"
+                        className="uppercase tracking-wide font-semibold min-w-[72px]"
                         aria-label={
                           canAssign
                             ? `Assign next patient to ${room.name}`
@@ -196,34 +182,13 @@ export function RoomAssignPanel({
                       >
                         Assign
                       </Button>
-                    ) : room.activeVisit ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleComplete(room.activeVisit!.id)}
-                        isLoading={isCompleting}
-                        disabled={isAnyActionRunning || !canComplete}
-                        icon={
-                          !isCompleting ? (
-                            <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
-                          ) : undefined
-                        }
-                        className="text-status-seen-text border-status-seen-text/40 hover:bg-[#ECFDF5]"
-                        aria-label={
-                          canComplete
-                            ? `Complete consultation in ${room.name}`
-                            : "Completing a visit requires Doctor or Admin role"
-                        }
-                        title={
-                          !canComplete
-                            ? "Requires Doctor or Admin role"
-                            : undefined
-                        }
-                      >
-                        Complete
-                      </Button>
                     ) : (
-                      <span className="text-sm text-neutral-slate-400 px-3">—</span>
+                      <span
+                        className="text-sm text-neutral-slate-400 px-3 min-w-[72px] text-center"
+                        aria-hidden="true"
+                      >
+                        —
+                      </span>
                     )}
                   </div>
                 </div>
@@ -231,14 +196,35 @@ export function RoomAssignPanel({
             })}
           </div>
         )}
+
+        {onRefresh && (
+          <div className="pt-1 flex justify-center">
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={handleRefresh}
+              isLoading={isRefreshing}
+              disabled={isAnyActionRunning}
+              icon={<RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />}
+              className="text-[12px] font-semibold uppercase tracking-wide"
+            >
+              Update Room Status
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Recent Assignments */}
       <div className="border-t border-neutral-slate-200 px-4 py-3">
         <div className="flex items-center justify-between mb-2.5">
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary-navy">
             Recent Assignments
           </h3>
+          <Link
+            href="/rooms"
+            className="text-[11px] font-semibold text-primary-blue hover:text-primary-navy transition-colors"
+          >
+            View all
+          </Link>
         </div>
 
         {recentAssignments.length === 0 ? (
