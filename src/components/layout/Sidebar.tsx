@@ -43,9 +43,15 @@ export function Sidebar({
   const { data: session } = useSession();
 
   const isAdmin = session?.user?.role === "ADMIN";
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => item.section !== "admin" || isAdmin
-  );
+  const isReceptionist = session?.user?.role === "RECEPTIONIST";
+
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    // Admin section — only admins see Patients, Reports, Settings
+    if (item.section === "admin" && !isAdmin) return false;
+    // Rooms — receptionists have no access, hide it rather than show a broken link
+    if (item.href === "/rooms" && isReceptionist) return false;
+    return true;
+  });
 
   const isItemActive = (href: string) => {
     if (href === "/queue" && (pathname === "/" || pathname === "/queue")) {
