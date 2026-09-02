@@ -16,12 +16,16 @@ export function WorkstationLayout({
   footerNote = "Please check patient details before assigning to a room.",
 }: WorkstationLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-canvas">
+    <div className="h-screen flex flex-col bg-canvas overflow-hidden">
+      {/* Header — fixed height, never scrolls */}
       <HeaderBar userName={userName} userRole={userRole} />
 
-      <div className="flex-1 flex min-h-0">
+      {/* Body — fills remaining height, sidebar + main side by side */}
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar — full body height, never scrolls */}
         <Sidebar />
 
+        {/* Main content — only this area scrolls */}
         <main className="flex-1 flex flex-col overflow-y-auto px-4 pt-3 pb-4 sm:px-5">
           <div className="flex-1 w-full flex flex-col">{children}</div>
 
