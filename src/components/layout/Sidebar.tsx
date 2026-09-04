@@ -32,12 +32,16 @@ export interface SidebarProps {
   queueId?: string;
   version?: string;
   className?: string;
+  isMobileOpen?: boolean;
+  onMobileNavigate?: () => void;
 }
 
 export function Sidebar({
   queueId = "MPOLY-22AUG-001",
   version = "1.0.0",
   className = "",
+  isMobileOpen = false,
+  onMobileNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -62,7 +66,9 @@ export function Sidebar({
 
   return (
     <aside
-      className={`w-[200px] bg-canvas flex flex-col justify-between shrink-0 select-none ${className}`}
+      className={`fixed inset-y-0 left-0 z-40 w-[260px] pt-[72px] bg-canvas flex flex-col justify-between shrink-0 select-none shadow-clinic-lg transition-transform duration-200 md:static md:z-auto md:w-[200px] md:pt-0 md:translate-x-0 md:shadow-none ${
+        isMobileOpen ? "translate-x-0" : "-translate-x-full"
+      } ${className}`}
       aria-label="Sidebar navigation"
     >
       <nav className="pt-3 px-3 flex flex-col gap-1" aria-label="Workstation">
@@ -73,6 +79,7 @@ export function Sidebar({
             <Link
               key={item.name}
               href={item.href}
+              onClick={onMobileNavigate}
               className={`relative flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-md text-[14px] transition-colors duration-150 ${
                 active
                   ? "bg-[#EDF1FA] text-primary-navy font-semibold"

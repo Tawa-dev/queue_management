@@ -155,8 +155,8 @@ export function RoomsClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[#ECFDF5] text-[#16A34A] border border-[#86EFAC]/40">
               <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
               {freeCount} Free

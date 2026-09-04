@@ -129,13 +129,13 @@ export function QueueTable({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-[13px]">
+          <table className="w-full min-w-[440px] text-left text-[13px]">
             <thead className="text-primary-navy text-[11px] uppercase font-semibold tracking-wider border-y border-neutral-slate-200">
               <tr>
                 <th scope="col" className="px-4 py-2.5 w-14">#</th>
                 <th scope="col" className="px-4 py-2.5">Patient</th>
-                <th scope="col" className="px-4 py-2.5">Reason for Visit</th>
-                <th scope="col" className="px-4 py-2.5">Arrived</th>
+                <th scope="col" className="hidden sm:table-cell px-4 py-2.5">Reason for Visit</th>
+                <th scope="col" className="hidden sm:table-cell px-4 py-2.5">Arrived</th>
                 <th scope="col" className="px-4 py-2.5">Waiting</th>
                 <th scope="col" className="px-4 py-2.5">Status</th>
               </tr>
@@ -176,8 +176,8 @@ export function QueueTable({
                         {visit.isUrgent && <Badge variant="urgent" size="sm" showDefaultIcon={false} />}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-normal text-primary-navy">{visit.reason}</td>
-                    <td className="px-4 py-3 font-normal text-primary-navy whitespace-nowrap">
+                    <td className="hidden sm:table-cell px-4 py-3 font-normal text-primary-navy">{visit.reason}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 font-normal text-primary-navy whitespace-nowrap">
                       {formatArrival(visit.checkInTime)}
                     </td>
                     <td className="px-4 py-3">

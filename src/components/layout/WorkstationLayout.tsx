@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { HeaderBar } from "./HeaderBar";
 import { Sidebar } from "./Sidebar";
 
@@ -15,18 +17,37 @@ export function WorkstationLayout({
   userRole = "Receptionist",
   footerNote = "Please check patient details before assigning to a room.",
 }: WorkstationLayoutProps) {
+  const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+
   return (
-    <div className="h-screen flex flex-col bg-canvas overflow-hidden">
+    <div className="min-h-screen h-dvh flex flex-col bg-canvas overflow-hidden">
       {/* Header — fixed height, never scrolls */}
-      <HeaderBar userName={userName} userRole={userRole} />
+      <HeaderBar
+        userName={userName}
+        userRole={userRole}
+        isMobileNavigationOpen={isMobileNavigationOpen}
+        onMobileNavigationToggle={() => setIsMobileNavigationOpen((open) => !open)}
+      />
 
       {/* Body — fills remaining height, sidebar + main side by side */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar — full body height, never scrolls */}
-        <Sidebar />
+        <Sidebar
+          isMobileOpen={isMobileNavigationOpen}
+          onMobileNavigate={() => setIsMobileNavigationOpen(false)}
+        />
+
+        {isMobileNavigationOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 z-30 bg-neutral-slate-900/35 md:hidden"
+            aria-label="Close navigation menu"
+            onClick={() => setIsMobileNavigationOpen(false)}
+          />
+        )}
 
         {/* Main content — only this area scrolls */}
-        <main className="flex-1 flex flex-col overflow-y-auto px-4 pt-3 pb-4 sm:px-5">
+        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto px-3 pt-3 pb-4 sm:px-5">
           <div className="flex-1 w-full flex flex-col">{children}</div>
 
           {footerNote && (

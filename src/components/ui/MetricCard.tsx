@@ -67,24 +67,25 @@ export function MetricBar({ metrics, className = "" }: MetricBarProps) {
       className={`bg-white rounded-lg border border-neutral-slate-200 shadow-clinic-sm grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-neutral-slate-200 ${className}`}
     >
       {metrics.map((metric) => (
-        <div key={metric.id} className="px-4 py-3.5 flex items-center gap-3 min-w-0">
+        <div key={metric.id} className="px-3 py-3 flex items-center gap-2.5 min-w-0">
+          {/* Icon wrapper — shrinks slightly at lg where 5 columns are tight */}
           <div
-            className={`shrink-0 ${metric.iconColor || "text-primary-navy"}`}
+            className={`shrink-0 [&_svg]:w-4 [&_svg]:h-4 lg:[&_svg]:w-[18px] lg:[&_svg]:h-[18px] ${metric.iconColor || "text-primary-navy"}`}
             aria-hidden="true"
           >
             {metric.icon}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary-navy truncate">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.07em] text-primary-navy leading-tight whitespace-normal break-words">
               {metric.label}
             </span>
             {metric.subtext && (
-              <span className="text-[11px] text-primary-navy/80 leading-tight truncate">
+              <span className="text-[10px] text-primary-navy/80 leading-tight">
                 {metric.subtext}
               </span>
             )}
             <span
-              className={`text-[28px] font-bold leading-none mt-0.5 ${
+              className={`text-xl lg:text-[26px] font-bold leading-none mt-0.5 ${
                 metric.valueColor || "text-primary-navy"
               }`}
             >

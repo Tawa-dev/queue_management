@@ -214,7 +214,7 @@ export function ReportsClient({ initialData }: ReportsClientProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {lastUpdated && (
             <div
               className="flex items-center gap-1.5 text-[11px] text-neutral-slate-500"

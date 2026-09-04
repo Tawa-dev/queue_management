@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import { LiveClock } from "@/components/ui/LiveClock";
 
 export interface HeaderBarProps {
@@ -13,11 +13,15 @@ export interface HeaderBarProps {
   isOnline?: boolean;
   clinicName?: string;
   subtitle?: string;
+  isMobileNavigationOpen?: boolean;
+  onMobileNavigationToggle?: () => void;
 }
 
 export function HeaderBar({
   clinicName = "MABVUKU POLYCLINIC",
   subtitle = "Outpatient Queue Management",
+  isMobileNavigationOpen = false,
+  onMobileNavigationToggle,
 }: HeaderBarProps) {
   const { data: session, status } = useSession();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -72,31 +76,44 @@ export function HeaderBar({
   };
 
   return (
-    <header className="w-full bg-header-navy text-white h-[88px] px-5 sm:px-6 grid grid-cols-[1fr_auto_1fr] items-center shadow-clinic-sm shrink-0 select-none relative z-50">
+    <header className="w-full bg-header-navy text-white min-h-[72px] sm:h-[88px] px-3 sm:px-6 grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[1fr_auto_1fr] items-center gap-2 shadow-clinic-sm shrink-0 select-none relative z-50">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+        {onMobileNavigationToggle && (
+          <button
+            type="button"
+            onClick={onMobileNavigationToggle}
+            className="md:hidden inline-flex w-11 h-11 items-center justify-center rounded text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            aria-label={isMobileNavigationOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileNavigationOpen}
+          >
+            {isMobileNavigationOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        )}
+        {/* Logo — smaller on mobile to give the clinic name more room */}
+        <div className="relative w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
           <Image
             src="/images/harare-crest.svg"
             alt="City of Harare Official Crest"
             width={48}
             height={48}
-            className="object-contain"
+            className="object-contain w-full h-full"
             priority
           />
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-sm sm:text-[15px] font-bold tracking-[0.04em] leading-tight text-white truncate">
+          {/* Clinic name — smaller + no letter-spacing on mobile so it never truncates */}
+          <span className="text-[11px] sm:text-[14px] font-bold sm:tracking-[0.04em] leading-tight text-white truncate">
             {clinicName}
           </span>
-          <span className="text-[12px] text-white/90 font-normal mt-0.5 leading-tight truncate">
+          <span className="hidden sm:block text-[11px] text-white/90 font-normal mt-0.5 leading-tight truncate">
             {subtitle}
           </span>
         </div>
       </div>
 
-      <LiveClock variant="header" />
+      <div className="hidden sm:block"><LiveClock variant="header" /></div>
 
-      <div className="flex items-center justify-end gap-4 sm:gap-5">
+      <div className="flex items-center justify-end gap-2 sm:gap-5">
         <div className="hidden sm:flex items-center gap-2 text-[13px] text-white">
           <span
             className={`w-2 h-2 rounded-full ${
@@ -144,7 +161,7 @@ export function HeaderBar({
                 </>
               )}
             </div>
-            <ChevronDown className="w-4 h-4 text-white" strokeWidth={1.75} aria-hidden="true" />
+            <ChevronDown className="hidden sm:block w-4 h-4 text-white" strokeWidth={1.75} aria-hidden="true" />
           </button>
 
           {isProfileOpen && (
