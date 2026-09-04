@@ -4,10 +4,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { getReportsDataAction } from "@/server/actions/getReports";
+import { getReportsDataAction, get7DayTrendAction } from "@/server/actions/getReports";
 import { ReportsClient } from "@/components/reports/ReportsClient";
 
 export default async function ReportsPage() {
-  const initialData = await getReportsDataAction();
-  return <ReportsClient initialData={initialData} />;
+  const [initialData, initialTrend] = await Promise.all([
+    getReportsDataAction(),
+    get7DayTrendAction(),
+  ]);
+
+  return <ReportsClient initialData={initialData} initialTrend={initialTrend} />;
 }

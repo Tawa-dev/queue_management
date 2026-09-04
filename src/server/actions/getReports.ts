@@ -9,6 +9,14 @@ export interface HourlyBucket {
   count: number;
 }
 
+export interface DayBucket {
+  isoDate: string;  // "2026-09-02" — used in CSV export
+  dayLabel: string; // "Mon", "Tue", etc.
+  fullLabel: string; // "2 Sep" — used in chart tooltip
+  count: number;
+  isToday: boolean;
+}
+
 export interface ReportData {
   success: boolean;
   seenToday: number;
@@ -132,5 +140,69 @@ export async function getReportsDataAction(): Promise<ReportData> {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("getReportsDataAction error:", message);
     return { ...empty, error: message };
+  }
+}
+
+/**
+ * Returns completed visit counts for each of the last 7 days (including today).
+ * Used for the weekly trend chart and its CSV export.
+ */
+export async function get7DayTrendAction(): Promise<DayBucket[]> {
+  try {
+    const session = await auth();
+    const zoneId = session?.user?.zoneId ?? null;
+    const zoneFilter = zoneId ? { zoneId } : {};
+
+    // Build day boundaries for the past 7 days
+    const days: { start: Date; end: Date; iso: string }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const start = new Date();
+      start.setDate(start.getDate() - i);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      days.push({
+        start,
+        end,
+        iso: start.toISOString().slice(0, 10),
+      });
+    }
+
+    // Fetch all completed visits in the 7-day window in one query
+    const windowStart = days[0].start;
+    const windowEnd   = days[days.length - 1].end;
+
+    const visits = await db.visit.findMany({
+      where: {
+        ...zoneFilter,
+        status: "COMPLETED",
+        completedTime: { gte: windowStart, lt: windowEnd },
+      },
+      select: { completedTime: true },
+    });
+
+    // Bucket by day
+    const countMap = new Map<string, number>();
+    for (const { start, iso } of days) countMap.set(iso, 0);
+
+    for (const v of visits) {
+      if (!v.completedTime) continue;
+      const iso = v.completedTime.toISOString().slice(0, 10);
+      if (countMap.has(iso)) countMap.set(iso, (countMap.get(iso) ?? 0) + 1);
+    }
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    return days.map(({ start, iso }) => ({
+      isoDate:   iso,
+      dayLabel:  start.toLocaleDateString("en-GB", { weekday: "short" }),
+      fullLabel: start.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+      count:     countMap.get(iso) ?? 0,
+      isToday:   iso === todayIso,
+    }));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("get7DayTrendAction error:", message);
+    return [];
   }
 }

@@ -181,14 +181,7 @@ export function RoomsClient({
       </div>
 
       {/* Live indicator */}
-      <div
-        className="flex items-center gap-1.5 text-[11px] text-neutral-slate-500"
-        role="status"
-        aria-live="polite"
-      >
-        <span className="w-1.5 h-1.5 rounded-full bg-status-seen-text" />
-        <span>Live · {lastUpdated}</span>
-      </div>
+      
 
       {/* Alert banner */}
       {alert && (

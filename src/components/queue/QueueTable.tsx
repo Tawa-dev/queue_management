@@ -88,14 +88,7 @@ export function QueueTable({
           <h3 className="text-[13px] font-bold text-primary-navy uppercase tracking-[0.06em] whitespace-nowrap">
             Waiting Queue ({filteredVisits.length})
           </h3>
-          <div
-            className="hidden sm:flex items-center gap-1.5 text-[11px] text-neutral-slate-500 whitespace-nowrap"
-            role="status"
-            aria-live="polite"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-status-seen-text" />
-            <span>Live · {lastUpdated}</span>
-          </div>
+        
         </div>
         <div className="w-full sm:w-56">
           <Input
