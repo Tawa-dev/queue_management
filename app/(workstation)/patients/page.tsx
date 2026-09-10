@@ -213,7 +213,7 @@ export default function PatientsPage() {
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   // Client-side search filter — trim + case insensitive name match

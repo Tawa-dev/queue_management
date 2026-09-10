@@ -27,9 +27,15 @@ const POLL_MS = 30_000;
 // Hourly volume bar chart
 // ---------------------------------------------------------------------------
 function HourlyVolumeChart({ data }: { data: HourlyBucket[] }) {
-  // nowHour must be derived client-side only to avoid hydration mismatch
-  const [nowHour, setNowHour] = useState<number | null>(null);
-  useEffect(() => { setNowHour(new Date().getHours()); }, []);
+  // Lazy initializer: safe on both server (returns null) and client
+  const [nowHour, setNowHour] = useState<number | null>(() =>
+    typeof window !== "undefined" ? new Date().getHours() : null
+  );
+  // Keep nowHour current as the hour changes
+  useEffect(() => {
+    const id = setInterval(() => setNowHour(new Date().getHours()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const maxCount  = Math.max(...data.map((d) => d.count), 1);
   const BAR_HEIGHT = 160;
@@ -239,41 +245,6 @@ function WeeklyTrendChart({
           <span className="w-3 h-3 rounded-sm bg-primary-blue inline-block" />
           Today
         </span>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Skeletons — deterministic heights, no Math.random()
-// ---------------------------------------------------------------------------
-function MetricCardSkeleton() {
-  return (
-    <div className="bg-white rounded-lg p-4 border border-neutral-slate-200 shadow-clinic-sm flex items-center gap-4 animate-pulse">
-      <div className="w-12 h-12 rounded-lg bg-neutral-slate-100 shrink-0" />
-      <div className="flex flex-col gap-2">
-        <div className="h-2 w-20 bg-neutral-slate-100 rounded" />
-        <div className="h-6 w-12 bg-neutral-slate-200 rounded" />
-      </div>
-    </div>
-  );
-}
-
-// Fixed heights (6 repeating values) — no Math.random(), no hydration mismatch
-const SKELETON_HEIGHTS = [40, 70, 55, 90, 35, 60];
-
-function ChartSkeleton() {
-  return (
-    <div className="bg-white rounded-lg border border-neutral-slate-200 shadow-clinic-sm p-5 animate-pulse">
-      <div className="h-3 w-48 bg-neutral-slate-100 rounded mb-4" />
-      <div className="flex items-end gap-1.5 h-40">
-        {Array.from({ length: 15 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex-1 min-w-[28px] bg-neutral-slate-100 rounded-t-sm"
-            style={{ height: `${SKELETON_HEIGHTS[i % SKELETON_HEIGHTS.length]}%` }}
-          />
-        ))}
       </div>
     </div>
   );

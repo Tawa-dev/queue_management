@@ -23,19 +23,20 @@ function waitTimeClass(mins: number) {
 
 export function QueueTable({
   visits,
-  lastUpdated = "Just now",
-  isLoading = false,
+  lastUpdated: _lastUpdated = "Just now",
+  isLoading: _isLoading = false,
   className = "",
 }: QueueTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  // null on the server / first render — avoids hydration mismatch caused by
-  // the server and client clocks diverging between SSR and hydration.
-  const [now, setNow] = useState<Date | null>(null);
+  // Lazy initializer: null on SSR (Date is not available), real Date on the
+  // client — avoids hydration mismatch and the set-state-in-effect lint error.
+  const [now, setNow] = useState<Date | null>(() =>
+    typeof window !== "undefined" ? new Date() : null
+  );
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    // Set the real time client-side after hydration, then tick every 15 s
-    setNow(new Date());
+    // Keep ticking every 15 s so wait-time labels stay current
     const interval = setInterval(() => setNow(new Date()), 15000);
     return () => clearInterval(interval);
   }, []);

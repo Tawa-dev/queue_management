@@ -175,10 +175,11 @@ export function WorkstationClient({
 // Sub-component: Next Patient card
 // ---------------------------------------------------------------------------
 function NextPatientCard({ visit }: { visit: QueueVisitItem }) {
-  const [now, setNow] = useState<Date | null>(null);
+  const [now, setNow] = useState<Date | null>(() =>
+    typeof window !== "undefined" ? new Date() : null
+  );
 
   useEffect(() => {
-    setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(id);
   }, []);

@@ -18,7 +18,11 @@ export function DisplayLayout({
   footerMessage = "Thank you for your patience. We will attend to you shortly.",
   children,
 }: DisplayLayoutProps) {
-  const [isOnline, setIsOnline] = useState(true);
+  // Lazy initializer reads navigator.onLine synchronously on the client —
+  // avoids calling setState inside the effect body (lint rule violation).
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
 
   // Track real network status for the offline banner
   useEffect(() => {
@@ -26,8 +30,6 @@ export function DisplayLayout({
     const handleOffline = () => setIsOnline(false);
     window.addEventListener("online",  handleOnline);
     window.addEventListener("offline", handleOffline);
-    // Set initial value (navigator.onLine is synchronous)
-    setIsOnline(navigator.onLine);
     return () => {
       window.removeEventListener("online",  handleOnline);
       window.removeEventListener("offline", handleOffline);

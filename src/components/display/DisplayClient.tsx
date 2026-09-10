@@ -16,12 +16,11 @@ export interface DisplayClientProps {
 }
 
 export function DisplayClient({ zoneCode, initialData }: DisplayClientProps) {
-  const [data, setData] = useState<DisplayData>(initialData);
-
-  // Seed from localStorage on mount — board survives a reload while offline.
-  // Runs after initialData is already set, so it only overrides if the cache
-  // is fresher than the server-rendered snapshot.
-  useEffect(() => {
+  // Lazy initializer: attempt to seed from localStorage on first render.
+  // This avoids a post-mount setState (which the lint rule flags) while still
+  // letting the offline cache override the SSR snapshot when fresher.
+  const [data, setData] = useState<DisplayData>(() => {
+    if (typeof window === "undefined") return initialData;
     try {
       const raw = localStorage.getItem(`display_cache_${zoneCode}`);
       if (raw) {
@@ -29,15 +28,15 @@ export function DisplayClient({ zoneCode, initialData }: DisplayClientProps) {
           data: DisplayData;
           cachedAt: number;
         };
-        // Only use the cache if it was written more recently than page load
         if (cachedAt > Date.now() - POLL_INTERVAL_MS * 2) {
-          setData(cached);
+          return cached;
         }
       }
     } catch {
       // Corrupt cache — ignore
     }
-  }, [zoneCode]);
+    return initialData;
+  });
 
   // Track NOW SERVING tickets so we only announce each one once
   const prevServingTicketsRef = useRef<Set<string>>(new Set());
@@ -93,7 +92,7 @@ export function DisplayClient({ zoneCode, initialData }: DisplayClientProps) {
   // will fire at the next 5s mark. If server data failed (zone not found, etc.)
   // poll immediately so the board tries to recover straight away.
   useEffect(() => {
-    if (!initialData.success) poll();
+    if (!initialData.success) void poll();
     const id = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(id);
   }, [poll, initialData.success]);

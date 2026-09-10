@@ -25,7 +25,9 @@ export function HeaderBar({
 }: HeaderBarProps) {
   const { data: session, status } = useSession();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [networkOnline, setNetworkOnline] = useState(true);
+  const [networkOnline, setNetworkOnline] = useState(() =>
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Only use session data once it has fully resolved — avoids the flash where
@@ -51,7 +53,6 @@ export function HeaderBar({
     const down = () => setNetworkOnline(false);
     window.addEventListener("online",  up);
     window.addEventListener("offline", down);
-    setNetworkOnline(navigator.onLine);
     return () => {
       window.removeEventListener("online",  up);
       window.removeEventListener("offline", down);
