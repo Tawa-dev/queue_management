@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { UserPlus, ShieldAlert } from "lucide-react";
+import { Printer, UserPlus, ShieldAlert } from "lucide-react";
 import { Button, Input, AlertBanner } from "@/components/ui";
 import { checkInPatientAction, CheckInResult } from "@/server/actions/checkIn";
+import { printReceipt } from "@/lib/printReceipt";
 
 export interface CheckInStripProps {
   onCheckInSuccess?: (result: CheckInResult) => void;
@@ -21,6 +22,13 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
     type: "success" | "warning" | "error";
     message: string;
     requiresConfirmation?: boolean;
+  } | null>(null);
+
+  // Stores the last successful check-in — shown until the alert is dismissed
+  const [lastCheckIn, setLastCheckIn] = useState<{
+    ticketNumber: string;
+    patientName: string;
+    printedAt: Date;
   } | null>(null);
 
   const validateForm = () => {
@@ -68,6 +76,11 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
         setAlertState({
           type: "success",
           message: `Patient checked in successfully. Ticket #${res.ticketNumber} issued.`,
+        });
+        setLastCheckIn({
+          ticketNumber: res.ticketNumber!,
+          patientName: res.patientName ?? submittedName,
+          printedAt: new Date(),
         });
         if (onCheckInSuccess) {
           onCheckInSuccess(res);
@@ -123,8 +136,31 @@ export function CheckInStrip({ onCheckInSuccess, className = "" }: CheckInStripP
           <AlertBanner
             type={alertState.type}
             message={alertState.message}
-            onDismiss={() => setAlertState(null)}
+            onDismiss={() => {
+              setAlertState(null);
+              setLastCheckIn(null);
+            }}
           />
+          {/* Print button — only shown after server confirms with a ticket number */}
+          {lastCheckIn && !isLoading && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={<Printer className="w-3.5 h-3.5" />}
+                onClick={() =>
+                  printReceipt({
+                    ticketNumber: lastCheckIn.ticketNumber,
+                    patientName: lastCheckIn.patientName,
+                    printedAt: lastCheckIn.printedAt,
+                  })
+                }
+              >
+                Print Receipt
+              </Button>
+            </div>
+          )}
           {alertState.requiresConfirmation && (
             <div className="flex items-center gap-2 bg-[#FFFBEB] p-2.5 rounded-lg border border-[#FDE68A]">
               <ShieldAlert className="w-4 h-4 text-[#D97706] shrink-0" />
